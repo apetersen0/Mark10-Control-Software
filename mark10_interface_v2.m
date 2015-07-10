@@ -104,6 +104,9 @@ handles.unitT='0';
 handles.unitvF = get(handles.popup_unitsF,'Value');
 handles.unitvT = get(handles.popup_unitsT,'Value');
 
+handles.imageFilenames = {};
+handles.passImages = {};
+
 set(handles.button_resume,'UserData',0);
 
 set(handles.label_bits,'String',num2str(handles.dataBits));
@@ -477,35 +480,6 @@ try
         end
         numC = numC+1;
     end
-
-
-%     if(handles.isAxial==1)
-%         switch indcUnits
-%             case(1)
-%                 fprintf(handles.contrSerial,'N');
-%             case(2)
-%                 fprintf(handles.contrSerial,'KN');
-%             case(3)
-%                 fprintf(handles.contrSerial,'LB');
-%             case(4)
-%                 fprintf(handles.contrSerial,'OZ');
-%             case(5)
-%                 fprintf(handles.contrSerial,'KG');
-%         end
-%     elseif(handles.isTorque==1)
-%         switch indcUnits
-%             case(1)
-%                 fprintf(handles.contrSerial,'NMM');
-%             case(2)
-%                 fprintf(handles.contrSerial,'KGMM');
-%             case(3)
-%                 fprintf(handles.contrSerial,'GCM');
-%             case(4)
-%                 fprintf(handles.contrSerial,'OZIN');
-%             case(5)
-%                 fprintf(handles.contrSerial,'NCM');
-%         end
-%     end
         
     pause(1);
     
@@ -547,6 +521,8 @@ try
         str2double(get(handles.edit9,'String')),...
         str2double(get(handles.edit8,'String'))];
     
+    %starts the timer for the sequence
+    tic;
     if(handles.isAxial==1)
         
         handles.DISP_DATA = [];
@@ -655,11 +631,7 @@ try
     end
     
     fprintf(handles.contrSerial,'s'); %stop
-    set(handles.text_seqNum,'String',['Sequence #: ',num2str(0)]);
-    
-    if(get(handles.checkbox_image,'Value')==1)
-        dOS.writeBytes('Q');
-    end
+    set(handles.text_seqNum,'String',['Sequence #: ',num2str(0)]);    
         
     try
         disp('Sequence complete, serial connection closing...');
@@ -670,7 +642,17 @@ try
     catch ee
         disp(ee);
     end
-
+    
+    try
+        dOS.close();
+        dIS.close();
+        imSocket2.close();
+    
+        disp('image computer socket closed');
+    catch err
+        disp(err);
+    end
+    
 catch error
     try
         fclose(handles.contrSerial);
@@ -688,6 +670,99 @@ catch error
     end
 end
 
+% SAVES THE IMAGES TAKEN, IF ANY
+if(get(handles.checkbox_image,'Value'))
+    imSocket = pnet('tcpconnect',ip,str2double(port2));
+    pnet(imSocket,'setreadtimeout',500);
+
+    handles.socketCreated = 1;
+
+    %recieves the # of images the camera took
+    numImages = zeros(1,8);
+    numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
+    disp(numImages);
+    numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
+    numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
+    disp(numImL);
+    disp(numImR);
+
+    %recieves the image data   
+    rawDatL=uint8(ones(numImL,325546));
+    rawDatR=uint8(ones(numImR,325546));
+
+    for(i=1:numImL)
+        %recieves the image data
+
+        disp(['Receiving Data for Image L ',num2str(i)]);
+        tic        
+        rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
+        disp(['Data Received. TIME= ',num2str(toc)]);
+    end
+
+    for(i=1:numImR)
+        %recieves the image data
+
+        disp(['Receiving Data for Image R ',num2str(i)]);
+        tic        
+        rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
+        disp(['Data Received. TIME= ',num2str(toc)]);
+    end
+
+    assignin('base','streamInputRawL',rawDatL);
+    assignin('base','streamInputRawR',rawDatR);
+
+
+
+    pnet(imSocket,'close');
+
+    %    Saves the data to file
+    tempOut = uint8(zeros(494,659));
+    tempOut2 = uint8(zeros(494,659)');
+    filename = 'C:/Users/Andy Petersen/Documents/test saving2/dataout.mat';
+    save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+    save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
+    for(j=1:numImL)
+        ct = 1;
+        rt = 1;        
+
+        for(i=1:size(rawDatL,2))
+            if(mod(i,659)==0)
+                tempOut(rt,ct) = rawDatL(j,i);
+                ct=1;
+                rt = rt+1;
+            else
+                tempOut(rt,ct) = rawDatL(j,i);
+                ct=ct+1;
+            end
+        end
+        tempOut2 = flip(tempOut',2);
+        handles.passImages{j} = tempOut2;
+        imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+        handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
+        disp('File Saved Succesfully')
+    end
+    assignin('base','tempOut',tempOut);
+    for(j=1:numImR)
+        ct = 1;
+        rt = 1;        
+
+        for(i=1:size(rawDatR,2))
+            if(mod(i,659)==0)
+                tempOut(rt,ct) = rawDatR(j,i);
+                ct=1;
+                rt = rt+1;
+            else
+                tempOut(rt,ct) = rawDatR(j,i);
+                ct=ct+1;
+            end
+        end
+        tempOut2 = flip(tempOut',1);
+        imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
+        disp('File Saved Succesfully')
+    end
+
+    ncorrFilePass(handles.passImages);
+end
 guidata(hObject,handles); 
 
 
@@ -1233,8 +1308,9 @@ handles.DISP_DATA = [];
 handles.FORCE_DATA = [];
 handles.TIMEA_DATA = [];
 handles.TIME_IMA = [];
-        
+handles.imageFilenames = {};
 
+handles.passImages = {};
 import java.net.Socket
 import java.io.*
 
@@ -1355,6 +1431,8 @@ try
     tempOut = uint8(zeros(494,659));
     tempOut2 = uint8(zeros(494,659)');
     filename = 'C:/Users/Andy Petersen/Documents/test saving2/dataout.mat';
+    save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+    save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
     for(j=1:numImL)
         ct = 1;
         rt = 1;        
@@ -1370,7 +1448,9 @@ try
             end
         end
         tempOut2 = flip(tempOut',2);
+        handles.passImages{j} = tempOut2;
         imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+        handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
         disp('File Saved Succesfully')
     end
     assignin('base','tempOut',tempOut);
@@ -1393,6 +1473,7 @@ try
         disp('File Saved Succesfully')
     end
 
+    ncorrFilePass(handles.passImages);
     %DISPLAYS IMAGE DATA LEFT TO RIGHT, IN SEQUENCE
 % %     figure
 % %     outputImageL = zeros(494,659);
@@ -1678,6 +1759,8 @@ function button_open_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [t1,t2] = uigetfile({'*.dat','Sequence Data File (*.dat)'},'Open Sequence');
+disp(t1)
+disp(t2)
 filename=[t2,t1];
 %opens the sequence .dat file and loads it into the uitable
 if(isnumeric(filename)==0)
@@ -2436,6 +2519,9 @@ if(~isempty(x))
     handles.TIMEA_DATA = [];
     handles.TIME_IMA = [];
 
+    handles.imageFilenames = {};
+    handles.passImages = {};
+    
     disp(['Lower Limit = ',x{1},'N']);
     disp(['Upper Limit = ',x{2},'N']);
     disp(['Speed = ',x{3},'mm/min']);
@@ -2548,6 +2634,8 @@ if(~isempty(x))
     %    Saves the data to file
         tempOut = uint8(zeros(494,659));
         tempOut2 = uint8(zeros(494,659)');
+        save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+        save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
         for(j=1:numImL)
             ct = 1;
             rt = 1;        
@@ -2563,7 +2651,9 @@ if(~isempty(x))
                 end
             end
             tempOut2 = flip(tempOut',2);
+            handles.passImages{j} = tempOut2;
             imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+            handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
             disp('File Saved Succesfully')
         end
         assignin('base','tempOut',tempOut);
@@ -2585,6 +2675,8 @@ if(~isempty(x))
             imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
             disp('File Saved Succesfully')
         end
+        
+        ncorrFilePass(handles.passImages);
     catch err
         disp(err);
     end
@@ -2624,6 +2716,9 @@ if(~isempty(x))
     handles.TIMEA_DATA = [];
     handles.TIME_IMA = [];
 
+    handles.imageFilenames = {};
+    handles.passImages = {};
+    
     disp(['Lower Limit = ',x{1},'mm']);
     disp(['Upper Limit = ',x{2},'mm']);
     disp(['Speed = ',x{3},'mm/min']);
@@ -2736,6 +2831,8 @@ if(~isempty(x))
     %    Saves the data to file
         tempOut = uint8(zeros(494,659));
         tempOut2 = uint8(zeros(494,659)');
+        save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+        save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
         for(j=1:numImL)
             ct = 1;
             rt = 1;        
@@ -2751,7 +2848,9 @@ if(~isempty(x))
                 end
             end
             tempOut2 = flip(tempOut',2);
+            handles.passImages{j} = tempOut2;
             imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+            handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
             disp('File Saved Succesfully')
         end
         assignin('base','tempOut',tempOut);
@@ -2773,6 +2872,8 @@ if(~isempty(x))
             imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
             disp('File Saved Succesfully')
         end
+        
+        ncorrFilePass(handles.passImages);
     catch err
         disp(err);
     end

@@ -4,6 +4,9 @@ timeDataO=[];
 dispDataO=[];
 forceDataO=[];
 
+%stores the array of lower limit values
+fLLimits = f_llimit;
+
 %image sample frequency
 f_sFreq2 = f_isr;
 
