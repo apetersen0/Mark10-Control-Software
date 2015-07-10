@@ -3,15 +3,14 @@ function [timeDataO,dispDataO,forceDataO,timeDataO2] = mark10CyclicForce(f_seria
 timeDataO=[];
 dispDataO=[];
 forceDataO=[];
-% disp('AAAAA')
-% sPeriod = 1/f_sFreq1;
+
+%image sample frequency
 f_sFreq2 = f_isr;
+
 dispData=[];
 timeData=[];
 forceData=[];
 temp_forcedata = 0;
-% rtplots = get(f_handles.checkbox_rtplot,'Value');
-image = get(f_handles.checkbox_image,'Value');
 
 %defaulting to mm/degrees
 f_units = 'i';
@@ -26,18 +25,13 @@ elseif(strcmp(f_units,'i'))
 end
 fprintf(f_serial,'o'); % sets speed to programmed speed
 
-% %sets number of cycles
-% fprintf(f_serial,['f',num2str(f_cycles,'%04.00f')]);
-% fprintf(f_serial,'r');
-% numCycles = fscanf(f_serial);
-
 % Store initial displacement
 dispinit = readDisp(f_serial,f_units);
 
 % Stores inital force
 forceinit = readForce(f_serial);
 
-
+%counter variables for array indices
 c1=1;
 c2=1;
 
@@ -54,16 +48,19 @@ nind1=1;
 ind2=1;
 nind2=1;
 
+%increments the counter variables for, as t>0 measurements have been taken
 c1=c1+1;
 c2=c2+1;
 
 
-% fprintf(f_serial,'c'); % sets to cycle mode
 
-fprintf(f_serial,'p')
+%requests stand status (direction, mode etc.), only used for imformational
+%purposes
+fprintf(f_serial,'p');
 xx=fscanf(f_serial);
 disp(xx);
-            
+
+%starts the timer for time measurements
 tic;
 for i=1:f_cycles
     disp(['Cycle #',num2str(i)]);
@@ -104,7 +101,7 @@ for i=1:f_cycles
         if(f_isr~=0)
             timeData2(c2,1) = toc;
             f_dOS.writeBytes('a');
-            disp('image triggered');            
+            disp(['image',num2str(c2),' triggered']);               
             c2=c2+1;
         end       
         ind2=nind2;
@@ -149,7 +146,7 @@ for i=1:f_cycles
         if(f_isr~=0)
             timeData2(c2,1) = toc;
             f_dOS.writeBytes('a');
-            disp('image triggered');            
+            disp(['image',num2str(c2),' triggered']);           
             c2=c2+1;
         end
         ind2=nind2;  
@@ -157,6 +154,3 @@ for i=1:f_cycles
     end
 end
 fprintf(f_serial,'s');
-% if(f_isr~=0)
-%         f_dOS.writeBytes('Q');
-% end

@@ -1,4 +1,5 @@
 function [timeDataO,dispDataO,forceDataO,timeDataO2] = mark10CyclicTranslate2(f_serial,f_llimit,f_ulimit,f_cycles,f_sFreq1,f_speed,f_handles,f_hObject,f_dOS,f_dIS)
+%Cyclic transtlate utilizing the cycle mode on the mark 10 laod frames
 
 timeDataO=[];
 dispDataO=[];

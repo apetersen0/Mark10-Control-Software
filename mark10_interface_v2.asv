@@ -2409,8 +2409,6 @@ function menu_hrcfc_Callback(hObject, eventdata, handles)
 % hObject    handle to menu_hrcfc (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-%FUNCTION FOR HIGH RATE CYCLIC FORCE CONTROL (FORCE TO FORCE)
 import java.net.Socket
 import java.io.*
 
@@ -2496,7 +2494,7 @@ if(~isempty(x))
         disp(error)
     end
     
-%%%%%%%% IMAGE AQUISITION CODE FOR CYCLIC MODES
+    % IMAGE AQUISITION CODE FOR HIGH RATE CYCLIC FORCE
     ip=get(handles.edit_ip,'String');
     port=get(handles.edit_port2,'String');
 
@@ -2682,99 +2680,6 @@ if(~isempty(x))
         delete(xx);
         clear xx;
         disp(error)
-    end
-    
-%%%%%%%%%%%%% IMAGE AQUISITION CODE FOR CYCLIC MODES
-    ip=get(handles.edit_ip,'String');
-    port=get(handles.edit_port2,'String');
-
-    disp('*****************************');
-    disp(['IP',ip, '  PORT=',port]);
-
-    try
-        imSocket = pnet('tcpconnect',ip,str2double(port));
-        pnet(imSocket,'setreadtimeout',500);
-
-        handles.socketCreated = 1;
-
-        %recieves the # of images the camera took
-        numImages = zeros(1,8);
-        numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
-        disp(numImages);
-        numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
-        numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
-        disp(numImL);
-        disp(numImR);
-
- 
-        rawDatL=uint8(ones(numImL,325546));
-        rawDatR=uint8(ones(numImR,325546));
-
-        for(i=1:numImL)
-            %recieves the image data
-
-            disp(['Receiving Data for Image L ',num2str(i)]);
-            tic        
-            rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
-            disp(['Data Received. TIME= ',num2str(toc)]);
-        end
-
-        for(i=1:numImR)
-            %recieves the image data
-
-            disp(['Receiving Data for Image R ',num2str(i)]);
-            tic        
-            rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
-            disp(['Data Received. TIME= ',num2str(toc)]);
-        end
-
-        assignin('base','streamInputRawL',rawDatL);
-        assignin('base','streamInputRawR',rawDatR);
-
-        pnet(imSocket,'close');
-
-    %    Saves the data to file
-        tempOut = uint8(zeros(494,659));
-        tempOut2 = uint8(zeros(494,659)');
-        for(j=1:numImL)
-            ct = 1;
-            rt = 1;        
-
-            for(i=1:size(rawDatL,2))
-                if(mod(i,659)==0)
-                    tempOut(rt,ct) = rawDatL(j,i);
-                    ct=1;
-                    rt = rt+1;
-                else
-                    tempOut(rt,ct) = rawDatL(j,i);
-                    ct=ct+1;
-                end
-            end
-            tempOut2 = flip(tempOut',2);
-            imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
-            disp('File Saved Succesfully')
-        end
-        assignin('base','tempOut',tempOut);
-        for(j=1:numImR)
-            ct = 1;
-            rt = 1;        
-
-            for(i=1:size(rawDatR,2))
-                if(mod(i,659)==0)
-                    tempOut(rt,ct) = rawDatR(j,i);
-                    ct=1;
-                    rt = rt+1;
-                else
-                    tempOut(rt,ct) = rawDatR(j,i);
-                    ct=ct+1;
-                end
-            end
-            tempOut2 = flip(tempOut',1);
-            imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
-            disp('File Saved Succesfully')
-        end
-    catch err
-        disp(err);
     end
 end
 
