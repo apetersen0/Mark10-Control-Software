@@ -1,6 +1,6 @@
-function [timeDataO,dispDataO,forceDataO,timeDataO2] = mark10TranslateToValueD2(f_serial,f_disp,f_sFreq1,f_speed,f_units,axes_yy,plot_yyL,plot_yyR,plotR,f_timeData,f_dispData,f_forceData,f_auto,f_handles,f_hObject,f_dOS,f_dIS,f_timeData2)
+function [timeDataO,dispDataO,forceDataO,timeDataO2,varargout] = mark10TranslateToValueD2(f_serial,f_disp,f_sFreq1,f_speed,f_units,axes_yy,plot_yyL,plot_yyR,plotR,f_timeData,f_dispData,f_forceData,f_auto,f_handles,f_hObject,f_dOS,f_dIS,f_timeData2,varargin)
 timeDataO=[];
-timeDataO=[];
+timeDataO2=[];
 dispDataO=[];
 forceDataO=[];
 
@@ -10,7 +10,7 @@ f_sFreq2 = str2double(get(f_handles.edit_imagerate,'String'));
 dispData=[];
 timeData=[];
 forceData=[];
-
+timeData2=[];
 
 lv=size(f_timeData,1);
 lv2=size(f_timeData2,1);
@@ -46,6 +46,13 @@ c2=1;
 timeData(c1,1) = toc;
 dispData(c1,1) = dispinit;
 forceData(c1,1) = forceinit;
+
+if(image==1)
+    timeData2(c2,1) = toc;
+    f_dOS.writeBytes('a');
+    disp(['image',num2str(c2),' triggered']);            
+    c2=c2+1;
+end 
 
 %Sets movement direction
 disp(['displacement amount = ',num2str(f_disp)])
@@ -106,8 +113,8 @@ nind1=1;
 ind2=1;
 nind2=1;
 
-
 c1=c1+1;
+c2=c2+1;
 
 if(f_disp-dispinit<0)
     while (temp_dispdata >= f_disp) 

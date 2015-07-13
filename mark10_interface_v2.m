@@ -26,7 +26,7 @@ function varargout = mark10_interface_v2(varargin)
 
 % Edit the above text to modify the response to help mark10_interface_v2
 
-% Last Modified by GUIDE v2.5 17-Jun-2015 12:18:55
+% Last Modified by GUIDE v2.5 13-Jul-2015 08:29:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -107,6 +107,7 @@ handles.unitvT = get(handles.popup_unitsT,'Value');
 handles.imageFilenames = {};
 handles.passImages = {};
 
+handles.defaultFilepath = '';
 set(handles.button_resume,'UserData',0);
 
 set(handles.label_bits,'String',num2str(handles.dataBits));
@@ -522,14 +523,13 @@ try
         str2double(get(handles.edit8,'String'))];
     
     %starts the timer for the sequence
-    tic;
+    tic;    
     if(handles.isAxial==1)
         
         handles.DISP_DATA = [];
         handles.FORCE_DATA = [];
         handles.TIMEA_DATA = [];
-        handles.TIME_IMA = [];
-        
+        handles.TIME_IMA = [];        
 
         for ll=1:tLoops
             for i=1:numSeq
@@ -643,14 +643,16 @@ try
         disp(ee);
     end
     
-    try
-        dOS.close();
-        dIS.close();
-        imSocket2.close();
-    
-        disp('image computer socket closed');
-    catch err
-        disp(err);
+    if(get(handles.checkbox_image,'Value'))
+        try
+            dOS.close();
+            dIS.close();
+            imSocket.close();
+
+            disp('image computer socket closed');
+        catch err
+            disp(err);
+        end
     end
     
 catch error
@@ -669,6 +671,31 @@ catch error
         disp(ee);
     end
 end
+
+% %saves the raw test data in the default filepath
+% if(handles.isAxial==1)
+%     if(~isempty(handles.TIME_IMA))
+%         tempTIME_IMA = [handles.TIME_IMA;zeros(length(handles.TIMEA_DATA)-length(handles.TIME_IMA),1)];
+%         outputRawData = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA,tempTIME_IMA];
+% 
+%         outputRawData = [{'time','force','disp','img time'};num2cell(outputRawData)];
+%     else
+%         outData = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA];
+%         outputRawData = [{'time','force','disp'};num2cell(outputRawData)];
+%     end
+% elseif(handles.isTorque==1)
+%     if(~isempty(handles.TIME_IMR))
+%         tempTIME_IMR = [handles.TIME_IMR;zeros(length(handles.TIMER_DATA)-length(handles.TIME_IMR),1)];
+% 
+%         outputRawData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA,tempTIME_IMR];
+%         outputRawData = [{'time','torque','rotation','img time'};num2cell(outputRawData)];         
+%     else
+%         outData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA];
+%         outputRawData = [{'time','torque','rotation'};num2cell(outputRawData)];   
+%     end            
+% end
+% save([handles.defaultFilepath,'RawDATA.mat'],'outputRawData');
+
 
 % SAVES THE IMAGES TAKEN, IF ANY
 if(get(handles.checkbox_image,'Value'))
@@ -718,7 +745,12 @@ if(get(handles.checkbox_image,'Value'))
     %    Saves the data to file
     tempOut = uint8(zeros(494,659));
     tempOut2 = uint8(zeros(494,659)');
-    filename = 'C:/Users/Andy Petersen/Documents/test saving2/dataout.mat';
+    if(length(handles.defaultFilepath)>1)
+        filename = [handles.defaultFilepath,'\data.mat'];
+    else
+        filename = [handles.defaultFilepath,'data.mat'];
+    end
+    disp(filename)
     save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
     save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
     for(j=1:numImL)
@@ -741,7 +773,7 @@ if(get(handles.checkbox_image,'Value'))
         handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
         disp('File Saved Succesfully')
     end
-    assignin('base','tempOut',tempOut);
+%     assignin('base','tempOut',tempOut);
     for(j=1:numImR)
         ct = 1;
         rt = 1;        
@@ -1568,11 +1600,11 @@ function uipushtool_save_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-filename = uiputfile({'*.mat','MAT File (*.mat)';...
+[t1,t2] = uiputfile({'*.mat','MAT File (*.mat)';...
 %     '*.csv','Comma Seperated Value (*.csv)';...
     '*.txt','Tab Delimited (*.txt)';...
     '*.xlsx','Excel Spreadsheet (*.xlsx)'},'Save Output Data');
-
+filename=[t2,t1];
 disp(filename);
 
 %stores the values from the sample parameter text boxes
@@ -1638,7 +1670,7 @@ elseif(get(handles.radbutton_cyl,'Value')==1)
     end
 end
 
-%samples the force/torque and disp/rot data for point corresopnding to
+%samples the force/torque and disp/rot data for point corresponding to
 %when the images were taken
 if(~isempty(handles.TIME_IMA))
     reducedForce=[];
@@ -1677,7 +1709,7 @@ end
 
 %saves the output data, along with the stress analysis data to file
 if(isnumeric(filename)==0)
-    disp(filename(length(filename)-2:end))
+%     disp(filename(length(filename)-2:end))
     if(strcmp(filename(length(filename)-2:end),'lsx'))
         if(handles.isAxial==1)
             exceldata = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA,stress];
@@ -1712,17 +1744,19 @@ if(isnumeric(filename)==0)
                 outData = [{'time','force','disp','img time','stress'};num2cell(outData)];
             else
                 outData = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA,stress];
+                outData = [{'time','force','disp','stress'};num2cell(outData)];
             end
         elseif(handles.isTorque==1)
-            if(~isempty(handles.TIME_IMA))
+            if(~isempty(handles.TIME_IMR))
                 tempTIME_IMR = [handles.TIME_IMR;zeros(length(handles.TIMER_DATA)-length(handles.TIME_IMR),1)];
                 
                 outData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA,tempTIME_IMR,stress];
-                outData = [{'time','torque','rotation','img time','stress'};num2cell(outData)];
+                outData = [{'time','torque','rotation','img time','stress'};num2cell(outData)];         
             else
                 outData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA,stress];
+                outData = [{'time','torque','rotation','stress'};num2cell(outData)];   
             end            
-        end        
+        end                
         save(filename,'outData');
     end
 end
@@ -1733,7 +1767,8 @@ function button_save_Callback(hObject, eventdata, handles)
 % hObject    handle to button_save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-filename = uiputfile({'*.dat','Sequence Data File (*.dat)'},'Save Sequence');
+[t1,t2] = uiputfile({'*.dat','Sequence Data File (*.dat)'},'Save Sequence');
+filename = [t2,t1];
 numSeq = size(get(handles.table_sequence,'Data'),1);
 dataSeq = get(handles.table_sequence,'Data');
 
@@ -2970,3 +3005,15 @@ if(~isempty(x))
         disp(error)
     end
 end
+
+
+% --------------------------------------------------------------------
+function mb_defpath_Callback(hObject, eventdata, handles)
+% hObject    handle to mb_defpath (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+tempDir = uigetdir('','Choose Default Directory');
+if(ischar(tempDir))
+    handles.defaultFilepath = tempDir;
+end
+guidata(hObject,handles);
