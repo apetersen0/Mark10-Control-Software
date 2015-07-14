@@ -1,4 +1,4 @@
-function [timeDataO,dispDataO,forceDataO,timeDataO2,varargout] = mark10TranslateToValueF2(f_serial,f_force,f_sFreq1,f_speed,f_units,axes_yy,plot_yyL,plot_yyR,plotR,f_timeData,f_dispData,f_forceData,f_auto,f_handles,f_hObject,f_dOS,f_dIS,f_timeData2,varargin)
+function [timeDataO,dispDataO,forceDataO,timeDataO2,varargout] = mark10TranslateToValueF2(f_serial,f_force,f_sFreq1,f_speed,f_units,axes_yy,plot_yyL,plot_yyR,plotR,f_timeData,f_dispData,f_forceData,f_auto,f_handles,f_hObject,f_dOS,f_dIS,f_timeData2,button_stop)
 timeDataO=[];
 timeDataO2=[];
 dispDataO=[];
@@ -120,7 +120,7 @@ c2=c2+1;
 
 if(f_force-forceinit<0)
     while (temp_forcedata >= f_force)        
-        while(nind2==ind2)
+        while(nind2==ind2)            
             nind1 = floor(toc*f_sFreq1)+1;
             nind2 = floor(toc*f_sFreq2)+1;
             temp_dispdata = readDisp(f_serial,f_units);
@@ -128,6 +128,9 @@ if(f_force-forceinit<0)
             
             if(temp_forcedata <= f_force)
                 break
+            end
+            if(get(button_stop,'UserData')==1)
+                break;
             end
                 
             if(nind1~=ind1)
@@ -161,7 +164,10 @@ if(f_force-forceinit<0)
             end            
         end    
         if(temp_forcedata <= f_force)
-                break
+            break
+        end
+        if(get(button_stop,'UserData')==1)
+            break;
         end
         if(image==1)
             timeData2(c2,1) = toc;
@@ -181,6 +187,9 @@ elseif(f_force-forceinit>0)
             
             if(temp_forcedata >= f_force)
                 break
+            end
+            if(get(button_stop,'UserData')==1)
+                break;
             end
                 
             if(nind1~=ind1)
@@ -214,7 +223,10 @@ elseif(f_force-forceinit>0)
             end            
         end    
         if(temp_forcedata >= f_force)
-                break
+            break
+        end
+        if(get(button_stop,'UserData')==1)
+            break;
         end
         if(image==1)
             timeData2(c2,1) = toc;

@@ -26,7 +26,7 @@ function varargout = mark10_interface_v2(varargin)
 
 % Edit the above text to modify the response to help mark10_interface_v2
 
-% Last Modified by GUIDE v2.5 13-Jul-2015 08:29:22
+% Last Modified by GUIDE v2.5 14-Jul-2015 12:33:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -123,6 +123,8 @@ elseif(get(handles.checkbox_loop,'Value')==0)
 end
 
 set(handles.popup_unitsT,'Value',5);
+
+set(handles.button_stop,'UserData',0);
 
 %inital plot setup
 t=0:.1:1;
@@ -550,14 +552,14 @@ try
                          mark10TranslateToValueD2(handles.contrSerial,limit,...
                          sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
                          handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
-                         auto,handles,hObject,dOS,dIS,handles.TIME_IMA);
+                         auto,handles,hObject,dOS,dIS,handles.TIME_IMA,handles.button_stop);
                 end
                 if(strcmp(type,'Force/Torque Limit'))
                      [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
                          mark10TranslateToValueF2(handles.contrSerial,limit,...
                          sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
                          handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
-                         auto,handles,hObject,dOS,dIS,handles.TIME_IMA);
+                         auto,handles,hObject,dOS,dIS,handles.TIME_IMA,handles.button_stop);
                 end
                 if(strcmp(type,'Pause (s)'))
                      [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
@@ -657,6 +659,14 @@ try
     
 catch error
     try
+        assignin('base','disp',handles.DISP_DATA);
+        assignin('base','force',handles.FORCE_DATA);
+        assignin('base','time',handles.TIMEA_DATA);
+        assignin('base','time_images',handles.TIME_IMA);
+    catch err
+    end
+    
+    try
         fclose(handles.contrSerial);
         delete(handles.contrSerial);
         clear handles.contrSerial;
@@ -672,6 +682,8 @@ catch error
     end
 end
 
+set(handles.button_stop,'UserData',0);
+set(handles.button_stop,'Enable','off');
 % %saves the raw test data in the default filepath
 % if(handles.isAxial==1)
 %     if(~isempty(handles.TIME_IMA))
@@ -803,16 +815,8 @@ function button_stop_Callback(hObject, eventdata, handles)
 % hObject    handle to button_stop (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-try
-    fprintf(handles.contrSerial,'s');
-    fclose(handles.contrSerial);
-    delete(handles.contrSerial);
-    clear handles.contrSerial;
-    disp('Sequence Stopped, Connection Closed');
-    set(button_stop,'Enable','off');
-catch ee
-    disp(ee);
-end
+set(handles.button_stop,'UserData',1);
+guidata(hObject,handles);
 
 % --- Executes when entered data in editable cell(s) in table_sequence.
 function table_sequence_CellEditCallback(hObject, eventdata, handles)
