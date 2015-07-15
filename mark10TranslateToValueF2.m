@@ -29,6 +29,7 @@ elseif(strcmp(f_units,'i'))
 end
 fprintf(f_serial,'o'); % sets speed to programmed speed
 
+disp(['force limit amount = ',num2str(f_force)]);
 
 % Store initial displacement
 dispinit = readDisp(f_serial,f_units);
@@ -49,12 +50,10 @@ forceData(c1,1) = forceinit;
 if(image==1)
     timeData2(c2,1) = toc;
     f_dOS.writeBytes('a');
-    disp(['image',num2str(c2),' triggered']);            
-    c2=c2+1;
+    disp(['image',num2str(c2),' triggered']);
 end 
 
 %Sets movement direction
-disp(['displacement amount = ',num2str(f_force)])
 if(f_force-forceinit<0)
     disp('tt');
     fprintf(f_serial,'s');

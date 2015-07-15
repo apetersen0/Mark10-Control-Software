@@ -50,8 +50,7 @@ forceData(c1,1) = forceinit;
 if(image==1)
     timeData2(c2,1) = toc;
     f_dOS.writeBytes('a');
-    disp(['image',num2str(c2),' triggered']);            
-    c2=c2+1;
+    disp(['image',num2str(c2),' triggered']);
 end 
 
 %Sets movement direction
@@ -130,6 +129,9 @@ if(f_disp-dispinit<0)
             if(temp_dispdata <= f_disp)
                 break
             end
+            if(get(button_stop,'UserData')==1)
+                break;
+            end
                 
             if(nind1~=ind1)
                 timeData(c1,1) = toc;
@@ -163,6 +165,9 @@ if(f_disp-dispinit<0)
         end    
         if(temp_dispdata <= f_disp)
                 break
+        end
+        if(get(button_stop,'UserData')==1)
+            break;
         end
         if(image==1)
             timeData2(c2,1) = toc;
@@ -218,7 +223,7 @@ elseif(f_disp-dispinit>0)
             end            
         end    
         if(temp_dispdata >= f_disp)
-                break
+            break
         end 
         if(get(button_stop,'UserData')==1)
             break;
