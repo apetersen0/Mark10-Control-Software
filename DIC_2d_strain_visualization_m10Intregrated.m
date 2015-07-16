@@ -86,5 +86,5 @@ if(make_image_sequence)
 end
 
 [timeData,forceData,stressData] = m10_ncorr_dataCombine(filename2);
-strainData = -eyy_avg;
+strainData = eyy_avg;
 strainStdData = eyy_std;

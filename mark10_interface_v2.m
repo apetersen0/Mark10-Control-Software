@@ -723,103 +723,108 @@ set(handles.button_stop,'Enable','off');
 
 
 % SAVES THE IMAGES TAKEN, IF ANY
-if(get(handles.checkbox_image,'Value'))
-    imSocket = pnet('tcpconnect',ip,str2double(port2));
-    pnet(imSocket,'setreadtimeout',500);
 
-    handles.socketCreated = 1;
+try
+    if(get(handles.checkbox_image,'Value'))
+        imSocket = pnet('tcpconnect',ip,str2double(port2));
+        pnet(imSocket,'setreadtimeout',500);
 
-    %recieves the # of images the camera took
-    numImages = zeros(1,8);
-    numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
-    disp(numImages);
-    numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
-    numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
-    disp(numImL);
-    disp(numImR);
+        handles.socketCreated = 1;
 
-    %recieves the image data   
-    rawDatL=uint8(ones(numImL,325546));
-    rawDatR=uint8(ones(numImR,325546));
+        %recieves the # of images the camera took
+        numImages = zeros(1,8);
+        numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
+        disp(numImages);
+        numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
+        numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
+        disp(numImL);
+        disp(numImR);
 
-    for(i=1:numImL)
-        %recieves the image data
+        %recieves the image data   
+        rawDatL=uint8(ones(numImL,325546));
+        rawDatR=uint8(ones(numImR,325546));
 
-        disp(['Receiving Data for Image L ',num2str(i)]);
-        tic        
-        rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
-        disp(['Data Received. TIME= ',num2str(toc)]);
-    end
+        for(i=1:numImL)
+            %recieves the image data
 
-    for(i=1:numImR)
-        %recieves the image data
-
-        disp(['Receiving Data for Image R ',num2str(i)]);
-        tic        
-        rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
-        disp(['Data Received. TIME= ',num2str(toc)]);
-    end
-
-    assignin('base','streamInputRawL',rawDatL);
-    assignin('base','streamInputRawR',rawDatR);
-
-
-
-    pnet(imSocket,'close');
-
-    %    Saves the data to file
-    tempOut = uint8(zeros(494,659));
-    tempOut2 = uint8(zeros(494,659)');
-    if(length(handles.defaultFilepath)>1)
-        filename = [handles.defaultFilepath,'\data.mat'];
-    else
-        filename = [handles.defaultFilepath,'data.mat'];
-    end
-    disp(filename)
-    save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
-    save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
-    for(j=1:numImL)
-        ct = 1;
-        rt = 1;        
-
-        for(i=1:size(rawDatL,2))
-            if(mod(i,659)==0)
-                tempOut(rt,ct) = rawDatL(j,i);
-                ct=1;
-                rt = rt+1;
-            else
-                tempOut(rt,ct) = rawDatL(j,i);
-                ct=ct+1;
-            end
+            disp(['Receiving Data for Image L ',num2str(i)]);
+            tic        
+            rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
+            disp(['Data Received. TIME= ',num2str(toc)]);
         end
-        tempOut2 = flip(tempOut',2);
-        handles.passImages{j} = tempOut2;
-        imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
-        handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
-        disp('File Saved Succesfully')
-    end
-%     assignin('base','tempOut',tempOut);
-    for(j=1:numImR)
-        ct = 1;
-        rt = 1;        
 
-        for(i=1:size(rawDatR,2))
-            if(mod(i,659)==0)
-                tempOut(rt,ct) = rawDatR(j,i);
-                ct=1;
-                rt = rt+1;
-            else
-                tempOut(rt,ct) = rawDatR(j,i);
-                ct=ct+1;
-            end
+        for(i=1:numImR)
+            %recieves the image data
+
+            disp(['Receiving Data for Image R ',num2str(i)]);
+            tic        
+            rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
+            disp(['Data Received. TIME= ',num2str(toc)]);
         end
-        tempOut2 = flip(tempOut',1);
-        imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
-        disp('File Saved Succesfully')
-    end
-    disp('ALL FILES SAVED SUCCESFULLY');
 
-%     ncorrFilePass(handles.passImages);
+        assignin('base','streamInputRawL',rawDatL);
+        assignin('base','streamInputRawR',rawDatR);
+
+
+
+        pnet(imSocket,'close');
+
+        %    Saves the data to file
+        tempOut = uint8(zeros(494,659));
+        tempOut2 = uint8(zeros(494,659)');
+        if(length(handles.defaultFilepath)>1)
+            filename = [handles.defaultFilepath,'\data.mat'];
+        else
+            filename = [handles.defaultFilepath,'data.mat'];
+        end
+        disp(filename)
+        save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+        save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
+        for(j=1:numImL)
+            ct = 1;
+            rt = 1;        
+
+            for(i=1:size(rawDatL,2))
+                if(mod(i,659)==0)
+                    tempOut(rt,ct) = rawDatL(j,i);
+                    ct=1;
+                    rt = rt+1;
+                else
+                    tempOut(rt,ct) = rawDatL(j,i);
+                    ct=ct+1;
+                end
+            end
+            tempOut2 = flip(tempOut',2);
+            handles.passImages{j} = tempOut2;
+            imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+            handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
+            disp(['File L',num2str(j),'Saved Succesfully'])
+        end
+    %     assignin('base','tempOut',tempOut);
+        for(j=1:numImR)
+            ct = 1;
+            rt = 1;        
+
+            for(i=1:size(rawDatR,2))
+                if(mod(i,659)==0)
+                    tempOut(rt,ct) = rawDatR(j,i);
+                    ct=1;
+                    rt = rt+1;
+                else
+                    tempOut(rt,ct) = rawDatR(j,i);
+                    ct=ct+1;
+                end
+            end
+            tempOut2 = flip(tempOut',1);
+            imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
+            disp(['File R',num2str(j),'Saved Succesfully'])
+        end
+        disp('ALL FILES SAVED SUCCESFULLY');
+
+    %     ncorrFilePass(handles.passImages);
+    end
+catch err
+    disp(err)
 end
 guidata(hObject,handles); 
 
@@ -3067,6 +3072,7 @@ handles.socketCreated = 1;
 try
     %recieves the # of images the camera took
     numImages = zeros(1,8);
+    
     numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
     disp(numImages);
     numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
@@ -3152,6 +3158,8 @@ try
         imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
         disp('File Saved Succesfully')
     end
+    
+    disp('All Images Recieved');
 catch err
     disp(err);
 end

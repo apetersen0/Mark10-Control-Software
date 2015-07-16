@@ -1,6 +1,6 @@
 [t1,t2] = uigetfile('*.tiff','MultiSelect','on');
 
-framerate = 8;
+framerate = 20;
 
 if(ischar(t1{1,1}))
     [s1,s2] = uiputfile('*.avi');

@@ -33,37 +33,41 @@ end
 assignin('base','CombinedData',outputData);
 disp('Data Set(s) Processed');
 
-%%Plots strain (in+%)
+%%PLOTS
 
+%Strain Plots
 for(i=1:numFiles1)
     figure;
     plot(1:size(outputData{1,i},1)-1,cell2mat(outputData{1,i}(2:end,4)));
     errorbar(cell2mat(outputData{1,i}(2:end,4)),cell2mat(outputData{1,i}(2:end,5)))
     xlabel('DIC frame')
     ylabel('Strain (yy)')
+    title(['Strain for Data Set#',num2str(i)]);
+end
+
+%SS Plots
+for(i=1:numFiles1)
+    figure;
+    plot(-cell2mat(outputData{1,i}(2:end,4)),-cell2mat(outputData{1,i}(2:end,3)).*10^-6,'b*');
+    xlabel('Strain')
+    ylabel('Stress (MPa)')
     title(['Stress vs. Strain for Data Set#',num2str(i)]);
 end
 
+%Combined SS Plot
 if(numFiles1>1)
     figure
     hold on
     for(i=1:numFiles1)
-        plot(cell2mat(outputData{1,i}(2:end,4)),-cell2mat(outputData{1,i}(2:end,3)).*10^-6,'-')
+        plot(-cell2mat(outputData{1,i}(2:end,4)),-cell2mat(outputData{1,i}(2:end,3)).*10^-6,'-')
     end
-    title('Stress vs. Strain')
+    title('Combined Stress vs. Strain')
     xlabel('Strain')
     ylabel('Stress (MPa)')
     hold off
 end
 
-t = cell(1,numFiles1);
-for(i=1:numFiles1)
-    t{i} = table(cell2mat(outputData{1,1}(2:end,1)),...
-        cell2mat(outputData{1,1}(2:end,2)),...
-        cell2mat(outputData{1,1}(2:end,3)),...
-        cell2mat(outputData{1,1}(2:end,4)),...
-        cell2mat(outputData{1,1}(2:end,5)),...
-        'VariableNames',{'Time','Force','Stress','Strain','Strain_Std_Dev'});
-end
-filename = 'temp.xlsx';
-writetable(t{1},filename,'Sheet',2,'WriteVariableNames',true)
+% filename = 'temp.csv';
+% for(i=1:numFiles1)
+%     xlswrite(filename,outputData{i},['Data Set ',num2str(1)]);
+% end
