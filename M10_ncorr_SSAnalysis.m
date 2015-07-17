@@ -24,13 +24,16 @@ if(iscell(t1) && iscell(s1))
         return
     end    
 else
-    numFiles1=1;
-    outputData = cell(1,1);
-    disp('Processing Data Set');
-    [timeData,forceData,stressData,strainData,strainStdData] = DIC_2d_strain_visualization_m10Intregrated([t2,t1],[s2,s1]);
-    outputData(1,1) = {[{'Time','Force','Stress','Strain','Strain Std. Dev.'};num2cell([timeData,forceData,stressData,strainData,strainStdData])]};
+    if(ischar(t1) && ischar(s1))
+        numFiles1=1;
+        outputData = cell(1,1);
+        disp('Processing Data Set');
+        [timeData,forceData,stressData,strainData,strainStdData] = DIC_2d_strain_visualization_m10Intregrated([t2,t1],[s2,s1]);
+        outputData(1,1) = {[{'Time','Force','Stress','Strain','Strain Std. Dev.'};num2cell([timeData,forceData,stressData,strainData,strainStdData])]};
+    else
+        return
+    end
 end
-assignin('base','CombinedData',outputData);
 disp('Data Set(s) Processed');
 
 %%PLOTS
@@ -67,7 +70,11 @@ if(numFiles1>1)
     hold off
 end
 
-% filename = 'temp.csv';
-% for(i=1:numFiles1)
-%     xlswrite(filename,outputData{i},['Data Set ',num2str(1)]);
-% end
+%saves reduced data to mat file
+for(i=1:numFiles1)
+ [t1,t2] = uiputfile('*.mat',['Save Reduced Data File #',num2str(i)]);
+ filename = [t2,t1];
+ reduced_data = outputData{1,i};
+ save(filename,'reduced_data');
+ disp(['Reduced Data File #',num2str(i),' Saved']);
+end

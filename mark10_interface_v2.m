@@ -26,7 +26,7 @@ function varargout = mark10_interface_v2(varargin)
 
 % Edit the above text to modify the response to help mark10_interface_v2
 
-% Last Modified by GUIDE v2.5 15-Jul-2015 09:39:47
+% Last Modified by GUIDE v2.5 17-Jul-2015 15:20:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -125,7 +125,7 @@ end
 set(handles.popup_unitsT,'Value',5);
 
 set(handles.button_stop,'UserData',0);
-
+set(handles.label_defpath,'String',handles.defaultFilepath);
 %inital plot setup
 t=0:.1:1;
 y=zeros(length(t));
@@ -340,7 +340,7 @@ port2 = get(handles.edit_port2,'String');
 %begin serial connection
 disp('*****************************');
 disp(['COM',comPort,', Baud=',num2str(baud),' Bits=',num2str(bits)]);
-
+tez=1;
 handles.contrSerial = serial(['COM',comPort],'BaudRate',baud,'DataBits',bits); % this line sets an object for the controller
 %set(handles.contrSerial,'Parity','even');
 try
@@ -534,6 +534,7 @@ try
         handles.TIME_IMA = [];        
 
         for ll=1:tLoops
+            disp(['Loop # ',num2str(ll),' of ',num2str(tLoops)]);
             for i=1:numSeq
                 set(handles.text_seqNum,'String',['Sequence #: ',num2str(i)]);
                 disp('*****************************')
@@ -552,7 +553,7 @@ try
                          mark10TranslateToValueD2(handles.contrSerial,limit,...
                          sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
                          handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
-                         auto,handles,hObject,dOS,dIS,handles.TIME_IMA,handles.button_stop);
+                         auto,handles,hObject,dOS,dIS,handles.TIME_IMA,handles.button_stop,tez);
                 end
                 if(strcmp(type,'Force/Torque Limit'))
                      [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
@@ -576,7 +577,8 @@ try
                      end
                      set(handles.button_resume,'Enable','off');
                      set(handles.button_resume,'UserData',0);
-                end                
+                end 
+                tez=0;
             end
         end
 
@@ -589,6 +591,7 @@ try
         handles.TIME_IMR = [];
         
         for ll=1:tLoops
+            disp(['Loop # ',num2str(ll),' of ',num2str(tLoops)]);
             for i=1:numSeq
                 set(handles.text_seqNum,'String',['Sequence #: ',num2str(i)]);
                 disp('*****************************')
@@ -627,7 +630,8 @@ try
                      end
                      set(handles.button_resume,'Enable','off');
                      set(handles.button_resume,'UserData',0);
-                end                
+                end   
+                tez=0;
             end
         end
     end
@@ -798,7 +802,7 @@ try
             handles.passImages{j} = tempOut2;
             imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
             handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
-            disp(['File L',num2str(j),'Saved Succesfully'])
+            disp(['File L',num2str(j),' Saved Succesfully'])
         end
     %     assignin('base','tempOut',tempOut);
         for(j=1:numImR)
@@ -817,7 +821,7 @@ try
             end
             tempOut2 = flip(tempOut',1);
             imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
-            disp(['File R',num2str(j),'Saved Succesfully'])
+            disp(['File R',num2str(j),' Saved Succesfully'])
         end
         disp('ALL FILES SAVED SUCCESFULLY');
 
@@ -3047,6 +3051,7 @@ function mb_defpath_Callback(hObject, eventdata, handles)
 tempDir = uigetdir('','Choose Default Directory');
 if(ischar(tempDir))
     handles.defaultFilepath = tempDir;
+    set(handles.label_defpath,'String',handles.defaultFilepath);
 end
 guidata(hObject,handles);
 
@@ -3163,3 +3168,18 @@ try
 catch err
     disp(err);
 end
+
+
+% --------------------------------------------------------------------
+function Untitled_3_Callback(hObject, eventdata, handles)
+% hObject    handle to Untitled_3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function menu_m10ncorrprocess_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_m10ncorrprocess (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+M10_ncorr_SSAnalysis
