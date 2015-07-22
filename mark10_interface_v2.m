@@ -112,7 +112,7 @@ set(handles.button_resume,'UserData',0);
 
 set(handles.label_bits,'String',num2str(handles.dataBits));
 set(handles.label_baud,'String',num2str(handles.baudRate));
-
+set(handles.text_loopNumber,'String',['Loop #: ',num2str(0)]);
 handles.imageRate = 1;
 handles.socketCreated = 0;
 
@@ -535,6 +535,7 @@ try
 
         for ll=1:tLoops
             disp(['Loop # ',num2str(ll),' of ',num2str(tLoops)]);
+            set(handles.text_loopNumber,'String',['Loop #: ',num2str(ll)]);
             for i=1:numSeq
                 set(handles.text_seqNum,'String',['Sequence #: ',num2str(i)]);
                 disp('*****************************')
@@ -560,7 +561,7 @@ try
                          mark10TranslateToValueF2(handles.contrSerial,limit,...
                          sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
                          handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
-                         auto,handles,hObject,dOS,dIS,handles.TIME_IMA,handles.button_stop);
+                         auto,handles,hObject,dOS,dIS,handles.TIME_IMA,handles.button_stop,tez);
                 end
                 if(strcmp(type,'Pause (s)'))
                      [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
@@ -592,6 +593,7 @@ try
         
         for ll=1:tLoops
             disp(['Loop # ',num2str(ll),' of ',num2str(tLoops)]);
+            set(handles.text_loopNumber,'String',['Loop #: ',num2str(ll)]);
             for i=1:numSeq
                 set(handles.text_seqNum,'String',['Sequence #: ',num2str(i)]);
                 disp('*****************************')

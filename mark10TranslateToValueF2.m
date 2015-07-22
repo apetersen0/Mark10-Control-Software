@@ -51,6 +51,7 @@ if(image==1 && t==1)
     timeData2(c2,1) = toc;
     f_dOS.writeBytes('a');
     disp(['image',num2str(c2),' triggered']);
+    c2=c2+1;
 end 
 
 %Sets movement direction
@@ -115,7 +116,6 @@ ind2=1;
 nind2=1;
 
 c1=c1+1;
-c2=c2+1;
 
 try
     if(f_force-forceinit<0)
