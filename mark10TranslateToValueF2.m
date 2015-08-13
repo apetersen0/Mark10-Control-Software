@@ -15,7 +15,6 @@ timeData2=[];
 lv=size(f_timeData,1);
 lv2=size(f_timeData2,1);
 
-
 rtplots = get(f_handles.checkbox_rtplot,'Value');
 image = get(f_handles.checkbox_image,'Value');
 
@@ -233,6 +232,7 @@ catch err
 
     end  
 end
+
 %end of function data assignment
 if(isempty(f_timeData)==1 && isempty(f_dispData)==1 && isempty(f_forceData)==1)
     dispDataO = dispData;

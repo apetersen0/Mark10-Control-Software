@@ -608,14 +608,14 @@ try
                 disp(' ');
 
                 if(strcmp(type,'Disp/Rotation Limit'))
-                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,TIME_IMR] = ...
+                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,handles.TIME_IMR] = ...
                          mark10RotateToValueD2(handles.contrSerial,limit,...
                          sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
                          handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,...
                          auto,handles,hObject,dOS,dIS,handles.TIME_IMR);
                 end
                 if(strcmp(type,'Force/Torque Limit'))
-                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,TIME_IMR] = ...
+                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,handles.TIME_IMR] = ...
                          mark10RotateToValueT2(handles.contrSerial,limit,...
                          sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
                          handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,...
@@ -664,14 +664,22 @@ try
     end
     
 catch error
+    
+    %backup variable saving
     try
         assignin('base','disp',handles.DISP_DATA);
         assignin('base','force',handles.FORCE_DATA);
-        assignin('base','time',handles.TIMEA_DATA);
-        assignin('base','time_images',handles.TIME_IMA);
+        assignin('base','timeA',handles.TIMEA_DATA);
+        assignin('base','time_imagesA',handles.TIME_IMA);
+        
+        assignin('base','rot',handles.ROT_DATA);
+        assignin('base','torque',handles.TORQUE_DATA);
+        assignin('base','timeR',handles.TIMER_DATA);
+        assignin('base','time_imagesR',handles.TIME_IMR);
     catch err
     end
     
+    %attempts to close down serial connection due to error
     try
         fclose(handles.contrSerial);
         delete(handles.contrSerial);
@@ -687,22 +695,40 @@ catch error
         disp(ee);
     end
 end
+
+% Stop Button data saving
 if(get(handles.button_stop,'UserData')==1)
     disp('Stopped');
-    handles.DISP_DATA = get(handles.plotR,'XData');
-    handles.FORCE_DATA = get(handles.plotR,'YData');
-    handles.TIMEA_DATA = get(handles.plot_yyL,'XData');
     
-    handles.DISP_DATA = handles.DISP_DATA{1,1}';
-    handles.FORCE_DATA = handles.FORCE_DATA{1,1}';
-    handles.TIMEA_DATA = handles.TIMEA_DATA{1,1}';
+    if(handles.isAxial==1)
+        handles.DISP_DATA = get(handles.plotR,'XData');
+        handles.FORCE_DATA = get(handles.plotR,'YData');
+        handles.TIMEA_DATA = get(handles.plot_yyL,'XData');
+
+        handles.DISP_DATA = handles.DISP_DATA{1,1}';
+        handles.FORCE_DATA = handles.FORCE_DATA{1,1}';
+        handles.TIMEA_DATA = handles.TIMEA_DATA{1,1}';
+        
+    elseif(handles.isTorque==1)
+        handles.ROT_DATA = get(handles.plotR,'XData');
+        handles.TORQUE_DATA = get(handles.plotR,'YData');
+        handles.TIMER_DATA = get(handles.plot_yyL,'XData');
+
+        handles.ROT_DATA = handles.ROT_DATA{1,1}';
+        handles.TORQUE_DATA = handles.TORQUE_DATA{1,1}';
+        handles.TIMER_DATA = handles.TIMER_DATA{1,1}';
+    end
+    
     
 %     assignin('base','disp',handles.DISP_DATA);
 %     assignin('base','force',handles.FORCE_DATA);
 %     assignin('base','time',handles.TIMEA_DATA);
+
 end
 set(handles.button_stop,'UserData',0);
 set(handles.button_stop,'Enable','off');
+
+
 % %saves the raw test data in the default filepath
 % if(handles.isAxial==1)
 %     if(~isempty(handles.TIME_IMA))
@@ -729,7 +755,6 @@ set(handles.button_stop,'Enable','off');
 
 
 % SAVES THE IMAGES TAKEN, IF ANY
-
 try
     if(get(handles.checkbox_image,'Value'))
         imSocket = pnet('tcpconnect',ip,str2double(port2));
@@ -1708,42 +1733,42 @@ elseif(get(handles.radbutton_cyl,'Value')==1)
     end
 end
 
-%samples the force/torque and disp/rot data for point corresponding to
-%when the images were taken
-if(~isempty(handles.TIME_IMA))
-    reducedForce=[];
-    reducedDisp=[];
-    index = 1;
-    
-    for(i=1:length(handles.TIME_IMA))
-        for(j=1:length(handles.TIMEA_DATA))
-            if(abs(handles.TIMEA_DATA(j)-handles.TIME_IMA(i)) < abs(handles.TIMEA_DATA(index)-handles.TIME_IMA(i)))
-                index = j;
-            end
-        end
-        reducedForce(i,1) = handles.FORCE_DATA(index);
-        reducedDisp(i,1) = handles.DISP_DATA(index);
-    end
-    disp(reducedDisp)
-end
-
-
-if(~isempty(handles.TIME_IMR))
-    reducedTorque=[];
-    reducedRot=[];
-    index = 1;
-    
-    for(i=1:length(handles.TIME_IMR))
-        for(j=1:length(handles.TIMER_DATA))
-            if(abs(handles.TIMER_DATA(j)-handles.TIME_IMR(i)) < abs(handles.TIMER_DATA(index)-handles.TIME_IMR(i)))
-                index = j;
-            end
-        end
-        reducedTorque(i,1) = handles.TORQUE_DATA(index);
-        reducedRot(i,1) = handles.ROT_DATA(index);
-    end
-    disp(reducedRot)
-end
+% % %samples the force/torque and disp/rot data for point corresponding to
+% % %when the images were taken
+% % if(~isempty(handles.TIME_IMA))
+% %     reducedForce=[];
+% %     reducedDisp=[];
+% %     index = 1;
+% %     
+% %     for(i=1:length(handles.TIME_IMA))
+% %         for(j=1:length(handles.TIMEA_DATA))
+% %             if(abs(handles.TIMEA_DATA(j)-handles.TIME_IMA(i)) < abs(handles.TIMEA_DATA(index)-handles.TIME_IMA(i)))
+% %                 index = j;
+% %             end
+% %         end
+% %         reducedForce(i,1) = handles.FORCE_DATA(index);
+% %         reducedDisp(i,1) = handles.DISP_DATA(index);
+% %     end
+% %     disp(reducedDisp)
+% % end
+% % 
+% % 
+% % if(~isempty(handles.TIME_IMR))
+% %     reducedTorque=[];
+% %     reducedRot=[];
+% %     index = 1;
+% %     
+% %     for(i=1:length(handles.TIME_IMR))
+% %         for(j=1:length(handles.TIMER_DATA))
+% %             if(abs(handles.TIMER_DATA(j)-handles.TIME_IMR(i)) < abs(handles.TIMER_DATA(index)-handles.TIME_IMR(i)))
+% %                 index = j;
+% %             end
+% %         end
+% %         reducedTorque(i,1) = handles.TORQUE_DATA(index);
+% %         reducedRot(i,1) = handles.ROT_DATA(index);
+% %     end
+% %     disp(reducedRot)
+% % end
 
 %saves the output data, along with the stress analysis data to file
 if(isnumeric(filename)==0)
