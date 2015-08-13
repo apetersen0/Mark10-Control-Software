@@ -1,4 +1,4 @@
-function [timeDataO,dispDataO,forceDataO,timeDataO2,varargout] = mark10TranslateToValueD2(f_serial,f_disp,f_sFreq1,f_speed,f_units,axes_yy,plot_yyL,plot_yyR,plotR,f_timeData,f_dispData,f_forceData,f_auto,f_handles,f_hObject,f_dOS,f_dIS,f_timeData2,button_stop)
+function [timeDataO,dispDataO,forceDataO,timeDataO2,varargout] = mark10TranslateToValueD2(f_serial,f_disp,f_sFreq1,f_speed,f_units,axes_yy,plot_yyL,plot_yyR,plotR,f_timeData,f_dispData,f_forceData,f_auto,f_handles,f_hObject,f_dOS,f_dIS,f_timeData2,button_stop,t)
 timeDataO=[];
 timeDataO2=[];
 dispDataO=[];

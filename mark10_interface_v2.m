@@ -347,6 +347,7 @@ try
     fopen(handles.contrSerial);    % This line opens communication to the controller   
     disp('Serial Connection Established');
     
+    %opens up camera network socket if imaging checkbox is selected
     if(get(handles.checkbox_image,'Value')==1)   
         disp('*****************************');
         disp(['IP',ip, '  PORT=',port2]);
@@ -366,6 +367,8 @@ try
     
     pause(0.5);
     
+    %sets units to english or metric (sets value multiple times as
+    %sometimes the load frsame will recieve the character, sometimes not)
     if(get(handles.popup_units,'Value')==1)
         fprintf(handles.contrSerial,'i');
         pause(0.001);
@@ -563,22 +566,22 @@ try
                          handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
                          auto,handles,hObject,dOS,dIS,handles.TIME_IMA,handles.button_stop,tez);
                 end
-                if(strcmp(type,'Pause (s)'))
-                     [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
-                         mark10PauseTranslate2(handles.contrSerial,sFreq,limit,...
-                         units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
-                         handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
-                         auto,dOS,dIS,handles.TIME_IMA);
-                end
-                if(strcmp(type,'Pause (button)'))
-                     fprintf(handles.contrSerial,'s');
-                     set(handles.button_resume,'Enable','on')
-                     while(get(handles.button_resume,'UserData')==0)
-                        pause(0.01);                         
-                     end
-                     set(handles.button_resume,'Enable','off');
-                     set(handles.button_resume,'UserData',0);
-                end 
+% %                 if(strcmp(type,'Pause (s)'))
+% %                      [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
+% %                          mark10PauseTranslate2(handles.contrSerial,sFreq,limit,...
+% %                          units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
+% %                          handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
+% %                          auto,dOS,dIS,handles.TIME_IMA);
+% %                 end
+% %                 if(strcmp(type,'Pause (button)'))
+% %                      fprintf(handles.contrSerial,'s');
+% %                      set(handles.button_resume,'Enable','on')
+% %                      while(get(handles.button_resume,'UserData')==0)
+% %                         pause(0.01);                         
+% %                      end
+% %                      set(handles.button_resume,'Enable','off');
+% %                      set(handles.button_resume,'UserData',0);
+% %                 end 
                 tez=0;
             end
         end
@@ -612,35 +615,36 @@ try
                          mark10RotateToValueD2(handles.contrSerial,limit,...
                          sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
                          handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,...
-                         auto,handles,hObject,dOS,dIS,handles.TIME_IMR);
+                         auto,handles,hObject,dOS,dIS,handles.TIME_IMR,handles.button_stop,tez);
                 end
                 if(strcmp(type,'Force/Torque Limit'))
                      [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,handles.TIME_IMR] = ...
                          mark10RotateToValueT2(handles.contrSerial,limit,...
                          sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
                          handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,...
-                         auto,handles,hObject,dOS,dIS,handles.TIME_IMR);
+                         auto,handles,hObject,dOS,dIS,handles.TIME_IMR,handles.button_stop,tez);
                 end
-                if(strcmp(type,'Pause (s)'))
-                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA] = mark10PauseTorque2(handles.contrSerial,sFreq,limit,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,auto);
-                end
-                if(strcmp(type,'Pause (button)'))
-                     fprintf(handles.contrSerial,'s');
-                     set(handles.button_resume,'Enable','on')
-                     while(get(handles.button_resume,'UserData')==0)
-                        pause(0.01);                         
-                     end
-                     set(handles.button_resume,'Enable','off');
-                     set(handles.button_resume,'UserData',0);
-                end   
+% %                 if(strcmp(type,'Pause (s)'))
+% %                      [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA] = mark10PauseTorque2(handles.contrSerial,sFreq,limit,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,auto);
+% %                 end
+% %                 if(strcmp(type,'Pause (button)'))
+% %                      fprintf(handles.contrSerial,'s');
+% %                      set(handles.button_resume,'Enable','on')
+% %                      while(get(handles.button_resume,'UserData')==0)
+% %                         pause(0.01);                         
+% %                      end
+% %                      set(handles.button_resume,'Enable','off');
+% %                      set(handles.button_resume,'UserData',0);
+% %                 end   
                 tez=0;
             end
         end
     end
     
-    fprintf(handles.contrSerial,'s'); %stop
+    fprintf(handles.contrSerial,'s'); %stops laod frame at end of sequence
     set(handles.text_seqNum,'String',['Sequence #: ',num2str(0)]);    
         
+    %attempts to close serial connection
     try
         disp('Sequence complete, serial connection closing...');
         fclose(handles.contrSerial);
@@ -651,6 +655,7 @@ try
         disp(ee);
     end
     
+    %closes socket connection to imaging server if imaging was selected
     if(get(handles.checkbox_image,'Value'))
         try
             dOS.close();
@@ -665,7 +670,10 @@ try
     
 catch error
     
-    %backup variable saving
+    %ERROR HANDLING
+    
+    %backup variable saving: attempts to save storage variables to
+    %workspace in case of error
     try
         assignin('base','disp',handles.DISP_DATA);
         assignin('base','force',handles.FORCE_DATA);
@@ -696,7 +704,7 @@ catch error
     end
 end
 
-% Stop Button data saving
+% Stop Button data saving, handled differently as it terminates sequence
 if(get(handles.button_stop,'UserData')==1)
     disp('Stopped');
     

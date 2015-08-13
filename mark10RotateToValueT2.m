@@ -238,10 +238,10 @@ if(isempty(f_timeData)==1 && isempty(f_rotData)==1 && isempty(f_torqueData)==1)
     rotDataO = rotData;
     timeDataO = timeData;
     torqueDataO = torqueData;
-    timeDataO2 = timeData2;    
+    timeDataO2 = timeData2;
 else
     rotDataO = [f_rotData;rotData];
     timeDataO = [f_timeData;timeData];
     torqueDataO = [f_torqueData;torqueData];
-    timeDataO2 = [f_timeData2;timeData2];    
+    timeDataO2 = [f_timeData2;timeData2];
 end  
