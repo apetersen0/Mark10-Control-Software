@@ -392,6 +392,9 @@ try
         
 %         tt = dIS.readLine();
 %         disp(tt);
+
+        %waits for exe to tell m10 testware that it is ready to take
+        %pictures
         while (true)
             resp = pnet(imSocket,'read',1);
             if(resp == 'r')
