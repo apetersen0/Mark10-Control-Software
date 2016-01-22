@@ -391,9 +391,10 @@ try
             ['"',handles.DIC_stem,'" '],...
             '.tiff &']);
         disp('*****************************');
-        disp(['IP',ip, '  PORT=',port2]);
+        disp(['IP=',ip, '  PORT=',port2]);
 
         clear(imSocket);
+        disp('Starting TCP/IP Connection');
         imSocket = pnet('tcpconnect',ip,str2double(port2));
         pnet(imSocket,'setreadtimeout',500);
         
@@ -461,8 +462,8 @@ try
         fprintf(handles.contrSerial,'?');
         resp=fscanf(handles.contrSerial);
         
-        disp(resp);
-        disp(indcUnits);
+%         disp(resp);
+%         disp(indcUnits);
         if(resp(1) == '*')            
             disp('flag')
             resp=fscanf(handles.contrSerial);    

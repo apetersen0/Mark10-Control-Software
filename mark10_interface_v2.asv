@@ -376,24 +376,25 @@ try
         %runs program using cmd line inputs
         % exe timeout port fileDir fileStem fileExten
         
-        if(handles.DIC_fpath)
+        if(isempty(handles.DIC_fpath))
             t_fname = [cd,'\DIC_Images\'];
             mkdir(t_fname);
         else
             t_fname = handles.DIC_fpath;
         end
         t_fname(t_fname=='\')='/';
-        
+        disp('Starting DIC Camera Controller');
         system(['M10_Imaging_Controller.exe ',...
             get(handles.edit_imagerate,'String'),' ',...
             port2,' ',...
             ['"',t_fname,'" '],...
-            handles.DIC_stem,...
+            ['"',handles.DIC_stem,'" '],...
             '.tiff &']);
         disp('*****************************');
-        disp(['IP',ip, '  PORT=',port2]);
+        disp(['IP=',ip, '  PORT=',port2]);
 
         clear(imSocket);
+        disp('Starting TCP/IP Connection');
         imSocket = pnet('tcpconnect',ip,str2double(port2));
         pnet(imSocket,'setreadtimeout',500);
         
@@ -461,8 +462,8 @@ try
         fprintf(handles.contrSerial,'?');
         resp=fscanf(handles.contrSerial);
         
-        disp(resp);
-        disp(indcUnits);
+%         disp(resp);
+%         disp(indcUnits);
         if(resp(1) == '*')            
             disp('flag')
             resp=fscanf(handles.contrSerial);    
@@ -735,6 +736,13 @@ catch error
     catch err
     end
     
+    if(get(handles.checkbox_image,'Value'))
+        try
+            pnet(imSocket,'close');
+        catch
+        end
+    end
+    
     %attempts to close down serial connection due to error
     try
         fclose(handles.contrSerial);
@@ -775,7 +783,12 @@ if(get(handles.button_stop,'UserData')==1)
         handles.TIMER_DATA = handles.TIMER_DATA{1,1}';
     end
     
-    
+    if(get(handles.checkbox_image,'Value'))
+        try
+            pnet(imSocket,'close');
+        catch
+        end
+    end
 %     assignin('base','disp',handles.DISP_DATA);
 %     assignin('base','force',handles.FORCE_DATA);
 %     assignin('base','time',handles.TIMEA_DATA);
@@ -3297,6 +3310,8 @@ if(~ischar(outdir))
 end
    
 handles.DIC_fpath = outdir;
+
+disp(['DIC Image Saving Filepath set to: ',handles.DIC_fpath]);
 guidata(hObject,handles);
 
 % --------------------------------------------------------------------
