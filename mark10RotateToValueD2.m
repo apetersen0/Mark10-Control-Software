@@ -1,4 +1,4 @@
-function [timeDataO,rotDataO,torqueDataO,timeDataO2,varargout] = mark10RotateToValueD2(f_serial,f_rot,f_sFreq1,f_speed,f_units,axes_yy,plot_yyL,plot_yyR,plotR,f_timeData,f_rotData,f_torqueData,f_auto,f_handles,f_hObject,f_dOS,f_dIS,f_timeData2,button_stop,t)
+function [timeDataO,rotDataO,torqueDataO,timeDataO2,varargout] = mark10RotateToValueD2(f_serial,f_rot,f_sFreq1,f_speed,f_units,axes_yy,plot_yyL,plot_yyR,plotR,f_timeData,f_rotData,f_torqueData,f_auto,f_handles,f_hObject,imSocket,f_timeData2,button_stop,t)
 timeDataO=[];
 timeDataO2=[];
 rotDataO=[];
@@ -47,7 +47,7 @@ torqueData(c1,1) = torqueinit;
 
 if(image==1 && t==1)
     timeData2(c2,1) = toc;
-    f_dOS.writeBytes('a');
+    pnet(imSocket,'write','a');
     disp(['image',num2str(c2),' triggered']);
     c2=c2+1;
 end 
@@ -162,7 +162,7 @@ try
             end
             if(image==1)
                 timeData2(c2,1) = toc;
-                f_dOS.writeBytes('a');
+                pnet(imSocket,'write','a');
                 disp(['image',num2str(c2),' triggered']);        
                 c2=c2+1;
             end 
@@ -211,7 +211,7 @@ try
             end 
             if(image==1)
                 timeData2(c2,1) = toc;
-                f_dOS.writeBytes('a');
+                pnet(imSocket,'write','a');
                 disp(['image',num2str(c2),' triggered']);  
                 c2=c2+1;
             end 

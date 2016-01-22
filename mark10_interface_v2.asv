@@ -2,38 +2,38 @@
 %2015
 %for: The Beam Team
 
-function varargout = mark10_interface_v2_BACKUP(varargin)
-% MARK10_INTERFACE_V2_BACKUP MATLAB code for mark10_interface_v2_BACKUP.fig
-%      MARK10_INTERFACE_V2_BACKUP, by itself, creates a new MARK10_INTERFACE_V2_BACKUP or raises the existing
+function varargout = mark10_interface_v2(varargin)
+% MARK10_INTERFACE_V2 MATLAB code for mark10_interface_v2.fig
+%      MARK10_INTERFACE_V2, by itself, creates a new MARK10_INTERFACE_V2 or raises the existing
 %      singleton*.
 %
-%      H = MARK10_INTERFACE_V2_BACKUP returns the handle to a new MARK10_INTERFACE_V2_BACKUP or the handle to
+%      H = MARK10_INTERFACE_V2 returns the handle to a new MARK10_INTERFACE_V2 or the handle to
 %      the existing singleton*.
 %
-%      MARK10_INTERFACE_V2_BACKUP('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in MARK10_INTERFACE_V2_BACKUP.M with the given input arguments.
+%      MARK10_INTERFACE_V2('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in MARK10_INTERFACE_V2.M with the given input arguments.
 %
-%      MARK10_INTERFACE_V2_BACKUP('Property','Value',...) creates a new MARK10_INTERFACE_V2_BACKUP or raises the
+%      MARK10_INTERFACE_V2('Property','Value',...) creates a new MARK10_INTERFACE_V2 or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before mark10_interface_v2_BACKUP_OpeningFcn gets called.  An
+%      applied to the GUI before mark10_interface_v2_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to mark10_interface_v2_BACKUP_OpeningFcn via varargin.
+%      stop.  All inputs are passed to mark10_interface_v2_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help mark10_interface_v2_BACKUP
+% Edit the above text to modify the response to help mark10_interface_v2
 
-% Last Modified by GUIDE v2.5 11-Jun-2015 15:32:10
+% Last Modified by GUIDE v2.5 22-Jan-2016 14:45:36
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @mark10_interface_v2_BACKUP_OpeningFcn, ...
-                   'gui_OutputFcn',  @mark10_interface_v2_BACKUP_OutputFcn, ...
+                   'gui_OpeningFcn', @mark10_interface_v2_OpeningFcn, ...
+                   'gui_OutputFcn',  @mark10_interface_v2_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -48,21 +48,21 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before mark10_interface_v2_BACKUP is made visible.
-function mark10_interface_v2_BACKUP_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before mark10_interface_v2 is made visible.
+function mark10_interface_v2_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to mark10_interface_v2_BACKUP (see VARARGIN)
+% varargin   command line arguments to mark10_interface_v2 (see VARARGIN)
 
-% Choose default command line output for mark10_interface_v2_BACKUP
+% Choose default command line output for mark10_interface_v2
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes mark10_interface_v2_BACKUP wait for user response (see UIRESUME)
+% UIWAIT makes mark10_interface_v2 wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 disp(' ');
@@ -93,6 +93,9 @@ handles.TORQUE_DATA = [];
 handles.TIMEA_DATA = [];
 handles.TIMER_DATA = [];
 
+handles.TIME_IMA = [];
+handles.TIME_IMR = [];
+
 handles.resume = 0;
 
 handles.unitF='0';
@@ -101,12 +104,20 @@ handles.unitT='0';
 handles.unitvF = get(handles.popup_unitsF,'Value');
 handles.unitvT = get(handles.popup_unitsT,'Value');
 
+handles.imageFilenames = {};
+handles.passImages = {};
+
+handles.DIC_fpath = '';
+handles.DIC_stem = 'image';
+
+handles.defaultFilepath = '';
 set(handles.button_resume,'UserData',0);
 
 set(handles.label_bits,'String',num2str(handles.dataBits));
 set(handles.label_baud,'String',num2str(handles.baudRate));
-
+set(handles.text_loopNumber,'String',['Loop #: ',num2str(0)]);
 handles.imageRate = 1;
+handles.socketCreated = 0;
 
 if(get(handles.checkbox_loop,'Value')==1)
     set(handles.edit_loop,'Enable','on')
@@ -116,6 +127,8 @@ end
 
 set(handles.popup_unitsT,'Value',5);
 
+set(handles.button_stop,'UserData',0);
+set(handles.label_defpath,'String',handles.defaultFilepath);
 %inital plot setup
 t=0:.1:1;
 y=zeros(length(t));
@@ -235,7 +248,7 @@ guidata(hObject,handles);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = mark10_interface_v2_BACKUP_OutputFcn(hObject, eventdata, handles)
+function varargout = mark10_interface_v2_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -247,12 +260,12 @@ varargout{1} = handles.output;
 
 
 function edit_port_Callback(hObject, eventdata, handles)
-% hObject    handle to edit_port (see GCBO)
+% hObject    handle to edit_port2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit_port as text
-%        str2double(get(hObject,'String')) returns contents of edit_port as a double
+% Hints: get(hObject,'String') returns contents of edit_port2 as text
+%        str2double(get(hObject,'String')) returns contents of edit_port2 as a double
 
 %text box check for valies COM port values
 chosenPort = get(handles.edit_port,'String');
@@ -268,7 +281,7 @@ guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function edit_port_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit_port (see GCBO)
+% hObject    handle to edit_port2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -306,6 +319,10 @@ comPort = handles.COM; %string format
 
 set(handles.button_stop,'Enable','on');
 
+ip=get(handles.edit_ip,'String');
+port2 = get(handles.edit_port2,'String');
+    
+
 % current handles for variable access
 % handles.selectedRow
 % handles.baudRate
@@ -326,33 +343,86 @@ set(handles.button_stop,'Enable','on');
 %begin serial connection
 disp('*****************************');
 disp(['COM',comPort,', Baud=',num2str(baud),' Bits=',num2str(bits)]);
-
+tez=1;
 handles.contrSerial = serial(['COM',comPort],'BaudRate',baud,'DataBits',bits); % this line sets an object for the controller
-
-if(get(handles.checkbox_image,'Value')==1)
-    ip='138.67.238.17';
-    port='5200';
-    
-    disp('*****************************');
-    disp(['IP',ip, '  PORT=',port]);
-    
-    %This code might work, test to see if it does later
-    try
-        imSocket = Socket(ip,str2double(port));
-        dOS = DataOutputStream(imSocket.getOutputStream());
-        handles.socketCreated = 1;
-    catch error
-        handles.socketCreated = 0;
-        disp(['Socket Connection @ ',ip,' port ',port,' Failed']);
-    end
-
-        
-end
 %set(handles.contrSerial,'Parity','even');
 try
-    fopen(handles.contrSerial);    % This line opens communication to the controller
-    disp('Connection Established');
+    fopen(handles.contrSerial);    % This line opens communication to the controller   
+    disp('Serial Connection Established');
+    
+    %opens up camera network socket if imaging checkbox is selected
+% %     if(get(handles.checkbox_image,'Value')==1)   
+% %         disp('*****************************');
+% %         disp(['IP',ip, '  PORT=',port2]);
+% % 
+% %         imSocket = Socket(ip,str2double(port2));
+% %         dOS = DataOutputStream(imSocket.getOutputStream());
+% %         dIS = DataInputStream(imSocket.getInputStream());
+% %         handles.socketCreated = 1;
+% %         disp('TCP/IP Socket Connection Established');
+% %         
+% % %         tt = dIS.readLine();
+% % %         disp(tt);
+% %     else
+% %         dOS = -1;
+% %         dIS = -1;
+% %     end
+
+    %NEW FEATURE. Connects to loopback ip to trigger image aquisition from
+    %own computer
+    imSocket = 0;
+    if(get(handles.checkbox_image,'Value')==1)  
+        
+        %runs program using cmd line inputs
+        % exe timeout port fileDir fileStem fileExten
+        
+        if(isempty(handles.DIC_fpath))
+            t_fname = [cd,'\DIC_Images\'];
+            mkdir(t_fname);
+        else
+            t_fname = handles.DIC_fpath;
+        end
+        t_fname(t_fname=='\')='/';
+        disp('Starting DIC Camera Controller');
+        system(['M10_Imaging_Controller.exe ',...
+            get(handles.edit_imagerate,'String'),' ',...
+            port2,' ',...
+            ['"',t_fname,'" '],...
+            ['"',handles.DIC_stem,'" '],...
+            '.tiff &']);
+        disp('*****************************');
+        disp(['IP=',ip, '  PORT=',port2]);
+
+        clear(imSocket);
+        disp('Starting TCP/IP Connection');
+        imSocket = pnet('tcpconnect',ip,str2double(port2));
+        pnet(imSocket,'setreadtimeout',500);
+        
+        handles.socketCreated = 1;
+        disp('TCP/IP Socket Connection Established');
+        
+%         tt = dIS.readLine();
+%         disp(tt);
+
+        %waits for exe to tell m10 testware that it is ready to take
+        %pictures
+        while (true)
+            resp = pnet(imSocket,'read',1);
+            if(resp == 'r')
+                pnet(imSocket,'write','r');
+                break;
+            end
+        end
+        
+    else
+        dOS = -1;
+        dIS = -1;
+    end
+    
     pause(0.5);
+    
+    %sets units to english or metric (sets value multiple times as
+    %sometimes the load frsame will recieve the character, sometimes not)
     if(get(handles.popup_units,'Value')==1)
         fprintf(handles.contrSerial,'i');
         pause(0.001);
@@ -371,6 +441,7 @@ try
         disp('Code: b, units set to u=inches') %sets units to inches&rev
     end
     
+    fprintf(handles.contrSerial,'m');
     pause(1);
     
     %sets force units
@@ -391,8 +462,8 @@ try
         fprintf(handles.contrSerial,'?');
         resp=fscanf(handles.contrSerial);
         
-        disp(resp);
-        disp(indcUnits);
+%         disp(resp);
+%         disp(indcUnits);
         if(resp(1) == '*')            
             disp('flag')
             resp=fscanf(handles.contrSerial);    
@@ -469,35 +540,6 @@ try
         end
         numC = numC+1;
     end
-
-
-%     if(handles.isAxial==1)
-%         switch indcUnits
-%             case(1)
-%                 fprintf(handles.contrSerial,'N');
-%             case(2)
-%                 fprintf(handles.contrSerial,'KN');
-%             case(3)
-%                 fprintf(handles.contrSerial,'LB');
-%             case(4)
-%                 fprintf(handles.contrSerial,'OZ');
-%             case(5)
-%                 fprintf(handles.contrSerial,'KG');
-%         end
-%     elseif(handles.isTorque==1)
-%         switch indcUnits
-%             case(1)
-%                 fprintf(handles.contrSerial,'NMM');
-%             case(2)
-%                 fprintf(handles.contrSerial,'KGMM');
-%             case(3)
-%                 fprintf(handles.contrSerial,'GCM');
-%             case(4)
-%                 fprintf(handles.contrSerial,'OZIN');
-%             case(5)
-%                 fprintf(handles.contrSerial,'NCM');
-%         end
-%     end
         
     pause(1);
     
@@ -512,7 +554,7 @@ try
     set(handles.plotR,'Xdata',0);        
 
     fprintf(handles.contrSerial,'z'); % sets current travel value to 0
-    fprintf(handles.contrSerial,'R');
+%     fprintf(handles.contrSerial,'R');
     disp('Travel Value Reset');
     
     numSeq = size(get(handles.table_sequence,'Data'),1);
@@ -539,14 +581,18 @@ try
         str2double(get(handles.edit9,'String')),...
         str2double(get(handles.edit8,'String'))];
     
+    %starts the timer for the sequence
+    tic;    
     if(handles.isAxial==1)
         
         handles.DISP_DATA = [];
         handles.FORCE_DATA = [];
         handles.TIMEA_DATA = [];
-        
+        handles.TIME_IMA = [];        
 
         for ll=1:tLoops
+            disp(['Loop # ',num2str(ll),' of ',num2str(tLoops)]);
+            set(handles.text_loopNumber,'String',['Loop #: ',num2str(ll)]);
             for i=1:numSeq
                 set(handles.text_seqNum,'String',['Sequence #: ',num2str(i)]);
                 disp('*****************************')
@@ -561,23 +607,36 @@ try
                 disp(' ');
 
                 if(strcmp(type,'Disp/Rotation Limit'))
-                     [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA] = mark10TranslateToValueD2(handles.contrSerial,limit,sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,auto,handles,hObject);
+                     [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
+                         mark10TranslateToValueD2(handles.contrSerial,limit,...
+                         sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
+                         handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
+                         auto,handles,hObject,imSocket,handles.TIME_IMA,handles.button_stop,tez);
                 end
                 if(strcmp(type,'Force/Torque Limit'))
-                     [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA] = mark10TranslateToValueF2(handles.contrSerial,limit,sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,auto,handles,hObject);
+                     [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
+                         mark10TranslateToValueF2(handles.contrSerial,limit,...
+                         sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
+                         handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
+                         auto,handles,hObject,imSocket,handles.TIME_IMA,handles.button_stop,tez);
                 end
-                if(strcmp(type,'Pause (s)'))
-                     [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA] = mark10PauseTranslate2(handles.contrSerial,sFreq,limit,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,auto);
-                end
-                if(strcmp(type,'Pause (button)'))
-                     fprintf(handles.contrSerial,'s');
-                     set(handles.button_resume,'Enable','on')
-                     while(get(handles.button_resume,'UserData')==0)
-                        pause(0.01);                         
-                     end
-                     set(handles.button_resume,'Enable','off');
-                     set(handles.button_resume,'UserData',0);
-                end                
+% %                 if(strcmp(type,'Pause (s)'))
+% %                      [handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,handles.TIME_IMA] = ...
+% %                          mark10PauseTranslate2(handles.contrSerial,sFreq,limit,...
+% %                          units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
+% %                          handles.plotR,handles.TIMEA_DATA,handles.DISP_DATA,handles.FORCE_DATA,...
+% %                          auto,dOS,dIS,handles.TIME_IMA);
+% %                 end
+% %                 if(strcmp(type,'Pause (button)'))
+% %                      fprintf(handles.contrSerial,'s');
+% %                      set(handles.button_resume,'Enable','on')
+% %                      while(get(handles.button_resume,'UserData')==0)
+% %                         pause(0.01);                         
+% %                      end
+% %                      set(handles.button_resume,'Enable','off');
+% %                      set(handles.button_resume,'UserData',0);
+% %                 end 
+                tez=0;
             end
         end
 
@@ -587,8 +646,11 @@ try
         handles.ROT_DATA = [];
         handles.TORQUE_DATA = [];
         handles.TIMER_DATA = [];
-    
+        handles.TIME_IMR = [];
+        
         for ll=1:tLoops
+            disp(['Loop # ',num2str(ll),' of ',num2str(tLoops)]);
+            set(handles.text_loopNumber,'String',['Loop #: ',num2str(ll)]);
             for i=1:numSeq
                 set(handles.text_seqNum,'String',['Sequence #: ',num2str(i)]);
                 disp('*****************************')
@@ -603,29 +665,40 @@ try
                 disp(' ');
 
                 if(strcmp(type,'Disp/Rotation Limit'))
-                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA] = mark10RotateToValueD2(handles.contrSerial,limit,sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,auto,handles,hObject);
+                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,handles.TIME_IMR] = ...
+                         mark10RotateToValueD2(handles.contrSerial,limit,...
+                         sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
+                         handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,...
+                         auto,handles,hObject,imSocket,handles.TIME_IMR,handles.button_stop,tez);
                 end
                 if(strcmp(type,'Force/Torque Limit'))
-                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA] = mark10RotateToValueT2(handles.contrSerial,limit,sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,auto,handles,hObject);
+                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,handles.TIME_IMR] = ...
+                         mark10RotateToValueT2(handles.contrSerial,limit,...
+                         sFreq,speed,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,...
+                         handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,...
+                         auto,handles,hObject,imSocket,handles.TIME_IMR,handles.button_stop,tez);
                 end
-                if(strcmp(type,'Pause (s)'))
-                     [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA] = mark10PauseTorque2(handles.contrSerial,sFreq,limit,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,auto);
-                end
-                if(strcmp(type,'Pause (button)'))
-                     fprintf(handles.contrSerial,'s');
-                     set(handles.button_resume,'Enable','on')
-                     while(get(handles.button_resume,'UserData')==0)
-                        pause(0.01);                         
-                     end
-                     set(handles.button_resume,'Enable','off');
-                     set(handles.button_resume,'UserData',0);
-                end                
+% %                 if(strcmp(type,'Pause (s)'))
+% %                      [handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA] = mark10PauseTorque2(handles.contrSerial,sFreq,limit,units,handles.axes_yy,handles.plot_yyL,handles.plot_yyR,handles.plotR,handles.TIMER_DATA,handles.ROT_DATA,handles.TORQUE_DATA,auto);
+% %                 end
+% %                 if(strcmp(type,'Pause (button)'))
+% %                      fprintf(handles.contrSerial,'s');
+% %                      set(handles.button_resume,'Enable','on')
+% %                      while(get(handles.button_resume,'UserData')==0)
+% %                         pause(0.01);                         
+% %                      end
+% %                      set(handles.button_resume,'Enable','off');
+% %                      set(handles.button_resume,'UserData',0);
+% %                 end   
+                tez=0;
             end
         end
     end
     
-    fprintf(handles.contrSerial,'s'); %stop
-    set(handles.text_seqNum,'String',['Sequence #: ',num2str(0)]);
+    fprintf(handles.contrSerial,'s'); %stops laod frame at end of sequence
+    set(handles.text_seqNum,'String',['Sequence #: ',num2str(0)]);    
+        
+    %attempts to close serial connection
     try
         disp('Sequence complete, serial connection closing...');
         fclose(handles.contrSerial);
@@ -635,19 +708,224 @@ try
     catch ee
         disp(ee);
     end
-
+    
+    %closes socket connection to imaging server if imaging was selected
+    if(get(handles.checkbox_image,'Value'))
+        try
+            pnet(imSocket,'close');
+        catch
+        end
+    end
+    
 catch error
+    
+    %ERROR HANDLING
+    
+    %backup variable saving: attempts to save storage variables to
+    %workspace in case of error
+    try
+        assignin('base','disp',handles.DISP_DATA);
+        assignin('base','force',handles.FORCE_DATA);
+        assignin('base','timeA',handles.TIMEA_DATA);
+        assignin('base','time_imagesA',handles.TIME_IMA);
+        
+        assignin('base','rot',handles.ROT_DATA);
+        assignin('base','torque',handles.TORQUE_DATA);
+        assignin('base','timeR',handles.TIMER_DATA);
+        assignin('base','time_imagesR',handles.TIME_IMR);
+    catch err
+    end
+    
+    if(get(handles.checkbox_image,'Value'))
+        try
+            pnet(imSocket,'close');
+        catch
+        end
+    end
+    
+    %attempts to close down serial connection due to error
     try
         fclose(handles.contrSerial);
         delete(handles.contrSerial);
         clear handles.contrSerial;
         disp('Serial communcation could not be established');
+        if(get(handles.checkbox_image,'Value')==1)
+            handles.socketCreated = 0;
+            disp(['TCP/IP Socket Connection @ ',ip,' port ',port2,' Not Established']);
+            disp(error);
+        end
         disp(error);
     catch ee
         disp(ee);
     end
 end
 
+% Stop Button data saving, handled differently as it terminates sequence
+if(get(handles.button_stop,'UserData')==1)
+    disp('Stopped');
+    
+    if(handles.isAxial==1)
+        handles.DISP_DATA = get(handles.plotR,'XData');
+        handles.FORCE_DATA = get(handles.plotR,'YData');
+        handles.TIMEA_DATA = get(handles.plot_yyL,'XData');
+
+        handles.DISP_DATA = handles.DISP_DATA{1,1}';
+        handles.FORCE_DATA = handles.FORCE_DATA{1,1}';
+        handles.TIMEA_DATA = handles.TIMEA_DATA{1,1}';
+        
+    elseif(handles.isTorque==1)
+        handles.ROT_DATA = get(handles.plotR,'XData');
+        handles.TORQUE_DATA = get(handles.plotR,'YData');
+        handles.TIMER_DATA = get(handles.plot_yyL,'XData');
+
+        handles.ROT_DATA = handles.ROT_DATA{1,1}';
+        handles.TORQUE_DATA = handles.TORQUE_DATA{1,1}';
+        handles.TIMER_DATA = handles.TIMER_DATA{1,1}';
+    end
+    
+    if(get(handles.checkbox_image,'Value'))
+        try
+            pnet(imSocket,'close');
+        catch
+        end
+    end
+%     assignin('base','disp',handles.DISP_DATA);
+%     assignin('base','force',handles.FORCE_DATA);
+%     assignin('base','time',handles.TIMEA_DATA);
+
+end
+set(handles.button_stop,'UserData',0);
+set(handles.button_stop,'Enable','off');
+
+
+% %saves the raw test data in the default filepath
+% if(handles.isAxial==1)
+%     if(~isempty(handles.TIME_IMA))
+%         tempTIME_IMA = [handles.TIME_IMA;zeros(length(handles.TIMEA_DATA)-length(handles.TIME_IMA),1)];
+%         outputRawData = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA,tempTIME_IMA];
+% 
+%         outputRawData = [{'time','force','disp','img time'};num2cell(outputRawData)];
+%     else
+%         outData = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA];
+%         outputRawData = [{'time','force','disp'};num2cell(outputRawData)];
+%     end
+% elseif(handles.isTorque==1)
+%     if(~isempty(handles.TIME_IMR))
+%         tempTIME_IMR = [handles.TIME_IMR;zeros(length(handles.TIMER_DATA)-length(handles.TIME_IMR),1)];
+% 
+%         outputRawData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA,tempTIME_IMR];
+%         outputRawData = [{'time','torque','rotation','img time'};num2cell(outputRawData)];         
+%     else
+%         outData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA];
+%         outputRawData = [{'time','torque','rotation'};num2cell(outputRawData)];   
+%     end            
+% end
+% save([handles.defaultFilepath,'RawDATA.mat'],'outputRawData');
+
+
+% SAVES THE IMAGES TAKEN, IF ANY
+% % try
+% %     if(get(handles.checkbox_image,'Value'))
+% %         imSocket = pnet('tcpconnect',ip,str2double(port2));
+% %         pnet(imSocket,'setreadtimeout',500);
+% % 
+% %         handles.socketCreated = 1;
+% % 
+% %         %recieves the # of images the camera took
+% %         numImages = zeros(1,8);
+% %         numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
+% %         disp(numImages);
+% %         numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
+% %         numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
+% %         disp(numImL);
+% %         disp(numImR);
+% % 
+% %         %recieves the image data   
+% %         rawDatL=uint8(ones(numImL,325546));
+% %         rawDatR=uint8(ones(numImR,325546));
+% % 
+% %         for(i=1:numImL)
+% %             %recieves the image data
+% % 
+% %             disp(['Receiving Data for Image L ',num2str(i)]);
+% %             tic        
+% %             rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
+% %             disp(['Data Received. TIME= ',num2str(toc)]);
+% %         end
+% % 
+% %         for(i=1:numImR)
+% %             %recieves the image data
+% % 
+% %             disp(['Receiving Data for Image R ',num2str(i)]);
+% %             tic        
+% %             rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
+% %             disp(['Data Received. TIME= ',num2str(toc)]);
+% %         end
+% % 
+% %         assignin('base','streamInputRawL',rawDatL);
+% %         assignin('base','streamInputRawR',rawDatR);
+% % 
+% % 
+% % 
+% %         pnet(imSocket,'close');
+% % 
+% %         %    Saves the data to file
+% %         tempOut = uint8(zeros(494,659));
+% %         tempOut2 = uint8(zeros(494,659)');
+% %         if(length(handles.defaultFilepath)>1)
+% %             filename = [handles.defaultFilepath,'\data.mat'];
+% %         else
+% %             filename = [handles.defaultFilepath,'data.mat'];
+% %         end
+% %         disp(filename)
+% %         save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+% %         save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
+% %         for(j=1:numImL)
+% %             ct = 1;
+% %             rt = 1;        
+% % 
+% %             for(i=1:size(rawDatL,2))
+% %                 if(mod(i,659)==0)
+% %                     tempOut(rt,ct) = rawDatL(j,i);
+% %                     ct=1;
+% %                     rt = rt+1;
+% %                 else
+% %                     tempOut(rt,ct) = rawDatL(j,i);
+% %                     ct=ct+1;
+% %                 end
+% %             end
+% %             tempOut2 = flip(tempOut',2);
+% %             handles.passImages{j} = tempOut2;
+% %             imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+% %             handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
+% %             disp(['File L',num2str(j),' Saved Succesfully'])
+% %         end
+% %     %     assignin('base','tempOut',tempOut);
+% %         for(j=1:numImR)
+% %             ct = 1;
+% %             rt = 1;        
+% % 
+% %             for(i=1:size(rawDatR,2))
+% %                 if(mod(i,659)==0)
+% %                     tempOut(rt,ct) = rawDatR(j,i);
+% %                     ct=1;
+% %                     rt = rt+1;
+% %                 else
+% %                     tempOut(rt,ct) = rawDatR(j,i);
+% %                     ct=ct+1;
+% %                 end
+% %             end
+% %             tempOut2 = flip(tempOut',1);
+% %             imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
+% %             disp(['File R',num2str(j),' Saved Succesfully'])
+% %         end
+% %         disp('ALL FILES SAVED SUCCESFULLY');
+% % 
+% %     %     ncorrFilePass(handles.passImages);
+% %     end
+% % catch err
+% %     disp(err)
+% % end
 guidata(hObject,handles); 
 
 
@@ -656,16 +934,8 @@ function button_stop_Callback(hObject, eventdata, handles)
 % hObject    handle to button_stop (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-try
-    fprintf(handles.contrSerial,'s');
-    fclose(handles.contrSerial);
-    delete(handles.contrSerial);
-    clear handles.contrSerial;
-    disp('Sequence Stopped, Connection Closed');
-    set(button_stop,'Enable','off');
-catch ee
-    disp(ee);
-end
+set(handles.button_stop,'UserData',1);
+guidata(hObject,handles);
 
 % --- Executes when entered data in editable cell(s) in table_sequence.
 function table_sequence_CellEditCallback(hObject, eventdata, handles)
@@ -1183,57 +1453,278 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 delete(hObject);
 
 
-% --- Executes on button press in pushbutton6.
-function pushbutton6_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton6 (see GCBO)
+% --- Executes on button press in button_debug.
+function button_debug_Callback(hObject, eventdata, handles)
+% hObject    handle to button_debug (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% xx=serial('COM5','BaudRate',115200,'DataBits',8);
-% fopen(xx);
-% disp('serial open')
-% for(i=1:10)
-%     fprintf(xx,'?');
-% end
-% % pause(2)
-% x={};
+
+handles.DISP_DATA = get(handles.plotR,'XData');
+handles.FORCE_DATA = get(handles.plotR,'YData');
+handles.TIMEA_DATA = get(handles.plot_yyL,'XData');
+
+handles.DISP_DATA = handles.DISP_DATA{1,1}';
+handles.FORCE_DATA = handles.FORCE_DATA{1,1}';
+handles.TIMEA_DATA = handles.TIMEA_DATA{1,1}';
+
+guidata(hObject,handles);
+% handles.DISP_DATA = [];
+% handles.FORCE_DATA = [];
+% handles.TIMEA_DATA = [];
+% handles.TIME_IMA = [];
+% handles.imageFilenames = {};
 % 
-% % for(i=1:10)
-% %     x{i}=fscanf(xx);
-% % end
-% fclose(xx);
-% delete(xx);
-% clear xx;
-% disp('done')
-% for(i=1:length(x))
-%     disp(x{i});
+% handles.passImages = {};
+% import java.net.Socket
+% import java.io.*
+% 
+% ip=get(handles.edit_ip,'String');
+% port=get(handles.edit_port2,'String');
+% 
+% disp('*****************************');
+% disp(['IP',ip, '  PORT=',port]);
+% 
+% % 
+% % imSocket2 = Socket(ip,str2double(port));
+% % dOS = DataOutputStream(imSocket.getOutputStream());
+% % dIS = DataInputStream(imSocket.getInputStream());
+%         
+% % This code might work, test to see if it does later
+% 
+% try
+%     %simulated m10 control
+%     imSocket2 = Socket(ip,str2double(port));
+%     dOS = DataOutputStream(imSocket2.getOutputStream());
+%     dIS = DataInputStream(imSocket2.getInputStream());
+%     
+%     frate = 2;
+%     time = 30;
+% 
+%     for i=1:frate*time;
+%         dOS.writeBytes('a');
+%         disp(['image ',num2str(i),' triggered']);
+%         pause(1/frate);        
+%     end
+%   
+%     try
+%         dOS.close();
+%         dIS.close();
+%         imSocket2.close();
+%     
+%         disp('sockets closed');
+%     catch err
+%         disp(err);
+%     end
+% 
+% 
+%     imSocket = pnet('tcpconnect',ip,str2double(port));
+%     pnet(imSocket,'setreadtimeout',500);
+%     
+%     
+%     handles.socketCreated = 1;
+% 
+% 
+%     % try
+%     %     xx=serial('COM5','BaudRate',115200,'DataBits',8);
+%     %     fopen(xx);
+%     %     disp('serial open')
+%     % 
+%     %     fprintf(xx,'z'); % sets current travel value to 0
+%     %     disp('Travel Value Reset');
+%     % 
+%     %    [y,~,~,~] = mark10CyclicTranslate(xx,-3,3,2,140,120,handles,hObject,-1,-1);
+%     % 
+%     %     fclose(xx);
+%     %     delete(xx);
+%     %     clear xx;
+%     %     disp('done')
+%     %     disp(y)
+%     %     disp(size(y))
+%     % catch e
+%     %     disp(e);
+%     %     try
+%     %         fclose(xx);
+%     %         delete(xx);
+%     %         clear xx;
+%     %     catch e
+%     %     end
+%     % end
+% 
+% % % %     frate = 2;
+% % % %     time = 10;
+%   
+%     %recieves the # of images the camera took
+%     numImages = zeros(1,8);
+%     numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
+%     disp(numImages);
+%     numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
+%     numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
+%     disp(numImL);
+%     disp(numImR);
+%     
+%     %recieves the image data   
+%     rawDatL=uint8(ones(numImL,325546));
+%     rawDatR=uint8(ones(numImR,325546));
+%     
+%     for(i=1:numImL)
+%         %recieves the image data
+%         
+%         disp(['Receiving Data for Image L ',num2str(i)]);
+%         tic        
+%         rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
+%         disp(['Data Received. TIME= ',num2str(toc)]);
+%     end
+%     
+%     for(i=1:numImR)
+%         %recieves the image data
+%         
+%         disp(['Receiving Data for Image R ',num2str(i)]);
+%         tic        
+%         rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
+%         disp(['Data Received. TIME= ',num2str(toc)]);
+%     end
+%     
+%     assignin('base','streamInputRawL',rawDatL);
+%     assignin('base','streamInputRawR',rawDatR);
+%     
+%     
+%      
+%     pnet(imSocket,'close');
+%     
+% %    Saves the data to file
+%     tempOut = uint8(zeros(494,659));
+%     tempOut2 = uint8(zeros(494,659)');
+%     filename = 'C:/Users/Andy Petersen/Documents/test saving2/dataout.mat';
+%     save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+%     save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
+%     for(j=1:numImL)
+%         ct = 1;
+%         rt = 1;        
+% 
+%         for(i=1:size(rawDatL,2))
+%             if(mod(i,659)==0)
+%                 tempOut(rt,ct) = rawDatL(j,i);
+%                 ct=1;
+%                 rt = rt+1;
+%             else
+%                 tempOut(rt,ct) = rawDatL(j,i);
+%                 ct=ct+1;
+%             end
+%         end
+%         tempOut2 = flip(tempOut',2);
+%         handles.passImages{j} = tempOut2;
+%         imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+%         handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
+%         disp('File Saved Succesfully')
+%     end
+%     assignin('base','tempOut',tempOut);
+%     for(j=1:numImR)
+%         ct = 1;
+%         rt = 1;        
+% 
+%         for(i=1:size(rawDatR,2))
+%             if(mod(i,659)==0)
+%                 tempOut(rt,ct) = rawDatR(j,i);
+%                 ct=1;
+%                 rt = rt+1;
+%             else
+%                 tempOut(rt,ct) = rawDatR(j,i);
+%                 ct=ct+1;
+%             end
+%         end
+%         tempOut2 = flip(tempOut',1);
+%         imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
+%         disp('File Saved Succesfully')
+%     end
+% 
+%     ncorrFilePass(handles.passImages);
+%     %DISPLAYS IMAGE DATA LEFT TO RIGHT, IN SEQUENCE
+% % %     figure
+% % %     outputImageL = zeros(494,659);
+% % %     outputImageR = zeros(494,659);
+% % %     for(j=1:numImL)
+% % %         %turns data into image
+% % %         ct = 1;
+% % %         rt = 1;        
+% % % 
+% % %         for(i=1:size(rawDatL,2))
+% % %             if(mod(i,659)==0)
+% % %                 outputImageL(rt,ct) = rawDatL(j,i);
+% % %                 ct=1;
+% % %                 rt = rt+1;
+% % %             else
+% % %                 outputImageL(rt,ct) = rawDatL(j,i);
+% % %                 ct=ct+1;
+% % %             end
+% % %         end
+% % %         
+% % %         ct = 1;
+% % %         rt = 1; 
+% % %         
+% % %         for(i=1:size(rawDatR,2))
+% % %             if(mod(i,659)==0)
+% % %                 outputImageR(rt,ct) = rawDatR(j,i);
+% % %                 ct=1;
+% % %                 rt = rt+1;
+% % %             else
+% % %                 outputImageR(rt,ct) = rawDatR(j,i);
+% % %                 ct=ct+1;
+% % %             end
+% % %         end
+% % %         
+% % %         subplot(numImL,2,(j-1)*2 + 1)
+% % %         imagesc(outputImageL,[0 255]);
+% % %         colormap gray
+% % %         
+% % %         subplot(numImL,2,(j-1)*2 + 2)        
+% % %         imagesc(outputImageR,[0 255]);
+% % %         colormap gray
+% % %     end
+% 
+%     
+%     
+% catch err
+%     disp(err);
 % end
-import java.net.Socket
-import java.io.*
-
-ip='138.67.238.17';
-port='5200';
-
-disp('*****************************');
-disp(['IP',ip, '  PORT=',port]);
-
-%This code might work, test to see if it does later
-try
-    imSocket = Socket(ip,str2double(port));
-    dOS = DataOutputStream(imSocket.getOutputStream());
-    handles.socketCreated = 1;
-    
-%     dOS.writeBytes('a');
-    pause(2)
-    dOS.writeBytes('Q');
-
-    dOS.close();
-    imSocket.close();
-
-catch error
-    handles.socketCreated = 0;
-    disp(['Socket Connection @ ',ip,' port ',port,' Failed']);
-    disp(error);
-end
+% 
+% % try
+% %     dOS.close();
+% %     dIS.close();
+% %     imSocket.close();
+% % 
+% %     disp('sockets closed');
+% % catch err
+% %     disp(err);
+% % end
+% 
+% 
+% % try
+% %     xx=serial('COM5','BaudRate',115200,'DataBits',8);
+% %     fopen(xx);
+% %     disp('serial open')
+% % 
+% %     fprintf(xx,'z'); % sets current travel value to 0
+% %     disp('Travel Value Reset');
+% % 
+% % %     [x,y,~,~] = mark10CyclicTranslate(xx,-.5,.5,20,180,600,handles,hObject,-1,-1);
+% %     [x,y,z,~] = mark10CyclicForce(xx,-5,5,5,100,300,handles,hObject,-1,-1);
+% %     assignin('base','disp',y);
+% %     assignin('base','time',x);
+% %     assignin('base','force',z);
+% %     
+% %     
+% %     fclose(xx);
+% %     delete(xx);
+% %     clear xx;    
+% %     disp(y)
+% %     disp(size(y))
+% %     disp('done')
+% % catch error
+% %     fclose(xx);
+% %     delete(xx);
+% %     clear xx;
+% %     disp(error)
+% % end
 
 % --------------------------------------------------------------------
 function uipushtool_save_ClickedCallback(hObject, eventdata, handles)
@@ -1241,11 +1732,11 @@ function uipushtool_save_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-filename = uiputfile({'*.mat','MAT File (*.mat)';...
+[t1,t2] = uiputfile({'*.mat','MAT File (*.mat)';...
 %     '*.csv','Comma Seperated Value (*.csv)';...
     '*.txt','Tab Delimited (*.txt)';...
     '*.xlsx','Excel Spreadsheet (*.xlsx)'},'Save Output Data');
-
+filename=[t2,t1];
 disp(filename);
 
 %stores the values from the sample parameter text boxes
@@ -1311,10 +1802,46 @@ elseif(get(handles.radbutton_cyl,'Value')==1)
     end
 end
 
+% % %samples the force/torque and disp/rot data for point corresponding to
+% % %when the images were taken
+% % if(~isempty(handles.TIME_IMA))
+% %     reducedForce=[];
+% %     reducedDisp=[];
+% %     index = 1;
+% %     
+% %     for(i=1:length(handles.TIME_IMA))
+% %         for(j=1:length(handles.TIMEA_DATA))
+% %             if(abs(handles.TIMEA_DATA(j)-handles.TIME_IMA(i)) < abs(handles.TIMEA_DATA(index)-handles.TIME_IMA(i)))
+% %                 index = j;
+% %             end
+% %         end
+% %         reducedForce(i,1) = handles.FORCE_DATA(index);
+% %         reducedDisp(i,1) = handles.DISP_DATA(index);
+% %     end
+% %     disp(reducedDisp)
+% % end
+% % 
+% % 
+% % if(~isempty(handles.TIME_IMR))
+% %     reducedTorque=[];
+% %     reducedRot=[];
+% %     index = 1;
+% %     
+% %     for(i=1:length(handles.TIME_IMR))
+% %         for(j=1:length(handles.TIMER_DATA))
+% %             if(abs(handles.TIMER_DATA(j)-handles.TIME_IMR(i)) < abs(handles.TIMER_DATA(index)-handles.TIME_IMR(i)))
+% %                 index = j;
+% %             end
+% %         end
+% %         reducedTorque(i,1) = handles.TORQUE_DATA(index);
+% %         reducedRot(i,1) = handles.ROT_DATA(index);
+% %     end
+% %     disp(reducedRot)
+% % end
 
 %saves the output data, along with the stress analysis data to file
 if(isnumeric(filename)==0)
-    disp(filename(length(filename)-2:end))
+%     disp(filename(length(filename)-2:end))
     if(strcmp(filename(length(filename)-2:end),'lsx'))
         if(handles.isAxial==1)
             exceldata = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA,stress];
@@ -1342,10 +1869,26 @@ if(isnumeric(filename)==0)
 %     end
     if(strcmp(filename(length(filename)-2:end),'mat'))
         if(handles.isAxial==1)
-            outData = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA,stress];
+            if(~isempty(handles.TIME_IMA))
+                tempTIME_IMA = [handles.TIME_IMA;zeros(length(handles.TIMEA_DATA)-length(handles.TIME_IMA),1)];
+                outData = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA,tempTIME_IMA,stress];
+                
+                outData = [{'time','force','disp','img time','stress'};num2cell(outData)];
+            else
+                outData = [handles.TIMEA_DATA,handles.FORCE_DATA,handles.DISP_DATA,stress];
+                outData = [{'time','force','disp','stress'};num2cell(outData)];
+            end
         elseif(handles.isTorque==1)
-            outData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA];
-        end        
+            if(~isempty(handles.TIME_IMR))
+                tempTIME_IMR = [handles.TIME_IMR;zeros(length(handles.TIMER_DATA)-length(handles.TIME_IMR),1)];
+                
+                outData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA,tempTIME_IMR,stress];
+                outData = [{'time','torque','rotation','img time','stress'};num2cell(outData)];         
+            else
+                outData = [handles.TIMER_DATA,handles.TORQUE_DATA,handles.ROT_DATA,stress];
+                outData = [{'time','torque','rotation','stress'};num2cell(outData)];   
+            end            
+        end                
         save(filename,'outData');
     end
 end
@@ -1356,7 +1899,8 @@ function button_save_Callback(hObject, eventdata, handles)
 % hObject    handle to button_save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-filename = uiputfile({'*.dat','Sequence Data File (*.dat)'},'Save Sequence');
+[t1,t2] = uiputfile({'*.dat','Sequence Data File (*.dat)'},'Save Sequence');
+filename = [t2,t1];
 numSeq = size(get(handles.table_sequence,'Data'),1);
 dataSeq = get(handles.table_sequence,'Data');
 
@@ -1382,6 +1926,8 @@ function button_open_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [t1,t2] = uigetfile({'*.dat','Sequence Data File (*.dat)'},'Open Sequence');
+disp(t1)
+disp(t2)
 filename=[t2,t1];
 %opens the sequence .dat file and loads it into the uitable
 if(isnumeric(filename)==0)
@@ -2079,18 +2625,18 @@ end
 
 
 
-function edit_port_Callback(hObject, eventdata, handles)
-% hObject    handle to edit_port (see GCBO)
+function edit_port2_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_port2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit_port as text
-%        str2double(get(hObject,'String')) returns contents of edit_port as a double
+% Hints: get(hObject,'String') returns contents of edit_port2 as text
+%        str2double(get(hObject,'String')) returns contents of edit_port2 as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit_port_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit_port (see GCBO)
+function edit_port2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_port2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -2099,3 +2645,692 @@ function edit_port_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --------------------------------------------------------------------
+function Untitled_2_Callback(hObject, eventdata, handles)
+% hObject    handle to Untitled_2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function menu_hrcfc_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_hrcfc (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%FUNCTION FOR HIGH RATE CYCLIC FORCE CONTROL (FORCE TO FORCE)
+import java.net.Socket
+import java.io.*
+
+prompt = {'Lower Force Limit (N)','Upper Force Limit (N)','Speed (mm/min)','# of Cycles','Data Sample Rate (Hz)','Image Sample Rate (Hz) (0 if no imaging desired)','Output Filename'};
+def = {num2str(-5),num2str(5),num2str(300),num2str(5),num2str(100),num2str(0),'cyclic_force_output.mat'};
+x = inputdlg(prompt,'Force Controled Cyclic Loading',1,def);
+
+ip=get(handles.edit_ip,'String');
+port2 = get(handles.edit_port2,'String');
+
+if(~isempty(x))
+    ll = str2double(x{1});
+    ul = str2double(x{2});
+    speed = str2double(x{3});
+    cycles = str2double(x{4});
+    dsr = str2double(x{5});
+    isr = str2double(x{6});
+    filename = x{7};
+
+
+    handles.DISP_DATA = [];
+    handles.FORCE_DATA = [];
+    handles.TIMEA_DATA = [];
+    handles.TIME_IMA = [];
+
+    handles.imageFilenames = {};
+    handles.passImages = {};
+    
+    disp(['Lower Limit = ',x{1},'N']);
+    disp(['Upper Limit = ',x{2},'N']);
+    disp(['Speed = ',x{3},'mm/min']);
+    disp(['# of Cycles = ',x{4}]);
+    disp(['Data Sample Rate = ',x{5},'Hz']);
+    disp(['Image Sample Rate = ',x{6},'Hz']);
+    
+    try
+        xx=serial('COM5','BaudRate',115200,'DataBits',8);
+        fopen(xx);
+        disp('serial open')
+
+        if(isr~=0)   
+            disp('*****************************');
+            disp(['IP',ip, '  PORT=',port2]);
+
+            imSocket = Socket(ip,str2double(port2));
+            dOS = DataOutputStream(imSocket.getOutputStream());
+            dIS = DataInputStream(imSocket.getInputStream());
+            handles.socketCreated = 1;
+            disp('TCP/IP Socket Connection Established');
+
+    %         tt = dIS.readLine();
+    %         disp(tt);
+        else
+            dOS = -1;
+            dIS = -1;
+            disp('No imaging selected');
+        end
+
+        
+        fprintf(xx,'z'); % sets current travel value to 0
+        disp('Travel Value Reset');
+
+    %     [x,y,~,~] = mark10CyclicTranslate(xx,-.5,.5,20,180,600,handles,hObject,-1,-1);
+        [x,y,z,w] = mark10CyclicForce(xx,ll,ul,cycles,dsr,speed,isr,handles,hObject,dOS,dIS);
+        assignin('base','disp',y);
+        assignin('base','time',x);
+        assignin('base','force',z);
+        assignin('base','imageTimes',w);
+
+        outputData = [x,y,z];
+        disp('Local variables saved');
+        save(filename,'outputData');
+        save([filename(1:end-4),'_IM.mat'],'w');
+        disp(['Data saved to file: ',filename]);
+
+        fclose(xx);
+        delete(xx);
+        clear xx;    
+%         disp(y)
+        disp(size(y))
+        disp('done')
+    catch error
+        fclose(xx);
+        delete(xx);
+        clear xx;
+        disp(error)
+    end
+    
+%%%%%%%% IMAGE AQUISITION CODE FOR CYCLIC MODES
+    ip=get(handles.edit_ip,'String');
+    port=get(handles.edit_port2,'String');
+
+    disp('*****************************');
+    disp(['IP',ip, '  PORT=',port]);
+
+    try
+        imSocket = pnet('tcpconnect',ip,str2double(port));
+        pnet(imSocket,'setreadtimeout',500);
+
+        handles.socketCreated = 1;
+
+        %recieves the # of images the camera took
+        numImages = zeros(1,8);
+        numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
+        disp(numImages);
+        numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
+        numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
+        disp(numImL);
+        disp(numImR);
+
+ 
+        rawDatL=uint8(ones(numImL,325546));
+        rawDatR=uint8(ones(numImR,325546));
+
+        for(i=1:numImL)
+            %recieves the image data
+
+            disp(['Receiving Data for Image L ',num2str(i)]);
+            tic        
+            rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
+            disp(['Data Received. TIME= ',num2str(toc)]);
+        end
+
+        for(i=1:numImR)
+            %recieves the image data
+
+            disp(['Receiving Data for Image R ',num2str(i)]);
+            tic        
+            rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
+            disp(['Data Received. TIME= ',num2str(toc)]);
+        end
+
+        assignin('base','streamInputRawL',rawDatL);
+        assignin('base','streamInputRawR',rawDatR);
+
+        pnet(imSocket,'close');
+
+    %    Saves the data to file
+        tempOut = uint8(zeros(494,659));
+        tempOut2 = uint8(zeros(494,659)');
+        save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+        save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
+        for(j=1:numImL)
+            ct = 1;
+            rt = 1;        
+
+            for(i=1:size(rawDatL,2))
+                if(mod(i,659)==0)
+                    tempOut(rt,ct) = rawDatL(j,i);
+                    ct=1;
+                    rt = rt+1;
+                else
+                    tempOut(rt,ct) = rawDatL(j,i);
+                    ct=ct+1;
+                end
+            end
+            tempOut2 = flip(tempOut',2);
+            handles.passImages{j} = tempOut2;
+            imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+            handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
+            disp('File Saved Succesfully')
+        end
+        assignin('base','tempOut',tempOut);
+        for(j=1:numImR)
+            ct = 1;
+            rt = 1;        
+
+            for(i=1:size(rawDatR,2))
+                if(mod(i,659)==0)
+                    tempOut(rt,ct) = rawDatR(j,i);
+                    ct=1;
+                    rt = rt+1;
+                else
+                    tempOut(rt,ct) = rawDatR(j,i);
+                    ct=ct+1;
+                end
+            end
+            tempOut2 = flip(tempOut',1);
+            imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
+            disp('File Saved Succesfully')
+        end
+        
+        ncorrFilePass(handles.passImages);
+    catch err
+        disp(err);
+    end
+end
+
+
+% --------------------------------------------------------------------
+function menu_hrcdc_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_hrcdc (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+%FUNTION FOR HIGH RATE CYCLIC DISPLACEMENT CONTROL
+import java.net.Socket
+import java.io.*
+
+prompt = {'Lower Displacement Limit (mm)','Upper Displacement Limit (mm)','Speed (mm/min)','# of Cycles','Data Sample Rate (Hz)','Image Sample Rate (Hz) (0 if no imaging desired)','Output Filename'};
+def = {num2str(-1),num2str(0),num2str(10),num2str(5),num2str(100),num2str(0),'cyclic_displacement_output.mat'};
+x = inputdlg(prompt,'Displacement Controled Cyclic Loading',1,def);
+
+ip=get(handles.edit_ip,'String');
+port2 = get(handles.edit_port2,'String');
+
+if(~isempty(x))
+    ll = str2double(x{1});
+    ul = str2double(x{2});
+    speed = str2double(x{3});
+    cycles = str2double(x{4});
+    dsr = str2double(x{5});
+    isr = str2double(x{6});
+    filename = x{7};
+
+
+    handles.DISP_DATA = [];
+    handles.FORCE_DATA = [];
+    handles.TIMEA_DATA = [];
+    handles.TIME_IMA = [];
+
+    handles.imageFilenames = {};
+    handles.passImages = {};
+    
+    disp(['Lower Limit = ',x{1},'mm']);
+    disp(['Upper Limit = ',x{2},'mm']);
+    disp(['Speed = ',x{3},'mm/min']);
+    disp(['# of Cycles = ',x{4}]);
+    disp(['Data Sample Rate = ',x{5},'Hz']);
+    disp(['Image Sample Rate = ',x{6},'Hz']);
+    
+    try
+        xx=serial('COM5','BaudRate',115200,'DataBits',8);
+        fopen(xx);
+        disp('serial open')
+
+        if(isr~=0)   
+            disp('*****************************');
+            disp(['IP',ip, '  PORT=',port2]);
+
+            imSocket = Socket(ip,str2double(port2));
+            dOS = DataOutputStream(imSocket.getOutputStream());
+            dIS = DataInputStream(imSocket.getInputStream());
+            handles.socketCreated = 1;
+            disp('TCP/IP Socket Connection Established');
+
+    %         tt = dIS.readLine();
+    %         disp(tt);
+        else
+            dOS = -1;
+            dIS = -1;
+            disp('No imaging selected');
+        end
+
+        
+        fprintf(xx,'z'); % sets current travel value to 0
+        disp('Travel Value Reset');
+
+    %     [x,y,~,~] = mark10CyclicTranslate(xx,-.5,.5,20,180,600,handles,hObject,-1,-1);
+        [x,y,z,w] = mark10CyclicTranslate(xx,ll,ul,cycles,dsr,speed,isr,handles,hObject,dOS,dIS);
+        assignin('base','disp',y);
+        assignin('base','time',x);
+        assignin('base','force',z);
+        assignin('base','imageTimes',w);
+
+        outputData = [x,y,z];
+        disp('Local variables saved');
+        save(filename,'outputData');
+        save(['IM_',filename],'w');
+        disp(['Data saved to file: ',filename]);
+
+        fclose(xx);
+        delete(xx);
+        clear xx;    
+%         disp(y)
+        disp(size(y))
+        disp('done')
+    catch error
+        fclose(xx);
+        delete(xx);
+        clear xx;
+        disp(error)
+    end
+    
+%%%%%%%%%%%%% IMAGE AQUISITION CODE FOR CYCLIC MODES
+    ip=get(handles.edit_ip,'String');
+    port=get(handles.edit_port2,'String');
+
+    disp('*****************************');
+    disp(['IP',ip, '  PORT=',port]);
+
+    try
+        imSocket = pnet('tcpconnect',ip,str2double(port));
+        pnet(imSocket,'setreadtimeout',500);
+
+        handles.socketCreated = 1;
+
+        %recieves the # of images the camera took
+        numImages = zeros(1,8);
+        numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
+        disp(numImages);
+        numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
+        numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
+        disp(numImL);
+        disp(numImR);
+
+ 
+        rawDatL=uint8(ones(numImL,325546));
+        rawDatR=uint8(ones(numImR,325546));
+
+        for(i=1:numImL)
+            %recieves the image data
+
+            disp(['Receiving Data for Image L ',num2str(i)]);
+            tic        
+            rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
+            disp(['Data Received. TIME= ',num2str(toc)]);
+        end
+
+        for(i=1:numImR)
+            %recieves the image data
+
+            disp(['Receiving Data for Image R ',num2str(i)]);
+            tic        
+            rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
+            disp(['Data Received. TIME= ',num2str(toc)]);
+        end
+
+        assignin('base','streamInputRawL',rawDatL);
+        assignin('base','streamInputRawR',rawDatR);
+
+        pnet(imSocket,'close');
+
+    %    Saves the data to file
+        tempOut = uint8(zeros(494,659));
+        tempOut2 = uint8(zeros(494,659)');
+        save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+        save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
+        for(j=1:numImL)
+            ct = 1;
+            rt = 1;        
+
+            for(i=1:size(rawDatL,2))
+                if(mod(i,659)==0)
+                    tempOut(rt,ct) = rawDatL(j,i);
+                    ct=1;
+                    rt = rt+1;
+                else
+                    tempOut(rt,ct) = rawDatL(j,i);
+                    ct=ct+1;
+                end
+            end
+            tempOut2 = flip(tempOut',2);
+            handles.passImages{j} = tempOut2;
+            imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+            handles.imageFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
+            disp('File Saved Succesfully')
+        end
+        assignin('base','tempOut',tempOut);
+        for(j=1:numImR)
+            ct = 1;
+            rt = 1;        
+
+            for(i=1:size(rawDatR,2))
+                if(mod(i,659)==0)
+                    tempOut(rt,ct) = rawDatR(j,i);
+                    ct=1;
+                    rt = rt+1;
+                else
+                    tempOut(rt,ct) = rawDatR(j,i);
+                    ct=ct+1;
+                end
+            end
+            tempOut2 = flip(tempOut',1);
+            imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
+            disp('File Saved Succesfully')
+        end
+        
+        ncorrFilePass(handles.passImages);
+    catch err
+        disp(err);
+    end
+end
+
+
+% --------------------------------------------------------------------
+function menu_hrcdf_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_hrcdf (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+import java.net.Socket
+import java.io.*
+
+prompt = {'Lower Displacement Limit (mm)','Upper Displacement Limit (N)','Speed (mm/min)','# of Cycles','Data Sample Rate (Hz)','Image Sample Rate (Hz) (0 if no imaging desired)','Output Filename'};
+def = {num2str(-1),num2str(0),num2str(10),num2str(5),num2str(100),num2str(0),'cyclic_displacementForce_output.mat'};
+x = inputdlg(prompt,'Displacement Force Controled Cyclic Loading',1,def);
+
+ip=get(handles.edit_ip,'String');
+port2 = get(handles.edit_port2,'String');
+
+if(~isempty(x))
+    ll = str2double(x{1});
+    ul = str2double(x{2});
+    speed = str2double(x{3});
+    cycles = str2double(x{4});
+    dsr = str2double(x{5});
+    isr = str2double(x{6});
+    filename = x{7};
+
+
+    handles.DISP_DATA = [];
+    handles.FORCE_DATA = [];
+    handles.TIMEA_DATA = [];
+    handles.TIME_IMA = [];
+
+    disp(['Lower Limit = ',x{1},'mm']);
+    disp(['Upper Limit = ',x{2},'N']);
+    disp(['Speed = ',x{3},'mm/min']);
+    disp(['# of Cycles = ',x{4}]);
+    disp(['Data Sample Rate = ',x{5},'Hz']);
+    disp(['Image Sample Rate = ',x{6},'Hz']);
+    
+    try
+        xx=serial('COM5','BaudRate',115200,'DataBits',8);
+        fopen(xx);
+        disp('serial open')
+
+        if(isr~=0)   
+            disp('*****************************');
+            disp(['IP',ip, '  PORT=',port2]);
+
+            imSocket = Socket(ip,str2double(port2));
+            dOS = DataOutputStream(imSocket.getOutputStream());
+            dIS = DataInputStream(imSocket.getInputStream());
+            handles.socketCreated = 1;
+            disp('TCP/IP Socket Connection Established');
+
+    %         tt = dIS.readLine();
+    %         disp(tt);
+        else
+            dOS = -1;
+            dIS = -1;
+            disp('No imaging selected');
+        end
+
+        
+        fprintf(xx,'z'); % sets current travel value to 0
+        disp('Travel Value Reset');
+
+    %     [x,y,~,~] = mark10CyclicTranslate(xx,-.5,.5,20,180,600,handles,hObject,-1,-1);
+        [x,y,z,w] = mark10CyclicDispForce(xx,ll,ul,cycles,dsr,speed,isr,handles,hObject,dOS,dIS);
+        assignin('base','disp',y);
+        assignin('base','time',x);
+        assignin('base','force',z);
+        assignin('base','imageTimes',w);
+
+        outputData = [x,y,z];
+        disp('Local variables saved');
+        save(filename,'outputData');
+        save(['IM_',filename],'w');
+        disp(['Data saved to file: ',filename]);
+
+        fclose(xx);
+        delete(xx);
+        clear xx;    
+%         disp(y)
+        disp(size(y))
+        disp('done')
+    catch error
+        fclose(xx);
+        delete(xx);
+        clear xx;
+        disp(error)
+    end
+end
+
+
+% --------------------------------------------------------------------
+function mb_defpath_Callback(hObject, eventdata, handles)
+% hObject    handle to mb_defpath (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+tempDir = uigetdir('','Choose Default Directory');
+if(ischar(tempDir))
+    handles.defaultFilepath = tempDir;
+    set(handles.label_defpath,'String',handles.defaultFilepath);
+end
+guidata(hObject,handles);
+
+
+% --------------------------------------------------------------------
+function menu_pulltriggered_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_pulltriggered (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ip=get(handles.edit_ip,'String');
+port=get(handles.edit_port2,'String');
+
+disp('*****************************');
+disp(['IP',ip, '  PORT=',port]);
+
+
+imSocket = pnet('tcpconnect',ip,str2double(port));
+pnet(imSocket,'setreadtimeout',500);
+
+handles.socketCreated = 1;
+    
+try
+    %recieves the # of images the camera took
+    numImages = zeros(1,8);
+    
+    numImages = pnet(imSocket,'read',size(numImages,2),'uint8');
+    disp(numImages);
+    numImL = double(bitor(bitor(bitor(double(numImages(1)),bitshift(double(numImages(2)),8,'uint64')),bitshift(double(numImages(3)),16,'uint64')),bitshift(double(numImages(4)),24,'uint64')));
+    numImR = double(bitor(bitor(bitor(double(numImages(5)),bitshift(double(numImages(6)),8,'uint64')),bitshift(double(numImages(7)),16,'uint64')),bitshift(double(numImages(8)),24,'uint64')));
+    disp(numImL);
+    disp(numImR);
+
+    %recieves the image data   
+    rawDatL=uint8(ones(numImL,325546));
+    rawDatR=uint8(ones(numImR,325546));
+
+    for(i=1:numImL)
+        %recieves the image data
+
+        disp(['Receiving Data for Image L ',num2str(i)]);
+        tic        
+        rawDatL(i,:) = pnet(imSocket,'read',size(rawDatL,2),'uint8');
+        disp(['Data Received. TIME= ',num2str(toc)]);
+    end
+
+    for(i=1:numImR)
+        %recieves the image data
+
+        disp(['Receiving Data for Image R ',num2str(i)]);
+        tic        
+        rawDatR(i,:) = pnet(imSocket,'read',size(rawDatR,2),'uint8');
+        disp(['Data Received. TIME= ',num2str(toc)]);
+    end
+
+    assignin('base','streamInputRawL',rawDatL);
+    assignin('base','streamInputRawR',rawDatR);
+
+
+
+    pnet(imSocket,'close');
+
+    %    Saves the data to file
+    tempOut = uint8(zeros(494,659));
+    tempOut2 = uint8(zeros(494,659)');
+    if(length(handles.defaultFilepath)>1)
+        filename = [handles.defaultFilepath,'\data.mat'];
+    else
+        filename = [handles.defaultFilepath,'data.mat'];
+    end
+    save([filename(1:end-4),'-rawImageDatL.mat'],'rawDatL');
+    save([filename(1:end-4),'-rawImageDatR.mat'],'rawDatR');
+    for(j=1:numImL)
+        ct = 1;
+        rt = 1;        
+
+        for(i=1:size(rawDatL,2))
+            if(mod(i,659)==0)
+                tempOut(rt,ct) = rawDatL(j,i);
+                ct=1;
+                rt = rt+1;
+            else
+                tempOut(rt,ct) = rawDatL(j,i);
+                ct=ct+1;
+            end
+        end
+        tempOut2 = flip(tempOut',2);
+%         handles.passImages{j} = tempOut2;
+        imwrite(tempOut2,[filename(1:end-4),'-image-L_',num2str(j),'.tiff'],'tiff');
+%         handles.imargeFilenames{j} = [filename(1:end-4),'-image-L_',num2str(j),'.tiff'];
+        disp('File Saved Succesfully')
+    end
+    assignin('base','tempOut',tempOut);
+    for(j=1:numImR)
+        ct = 1;
+        rt = 1;        
+
+        for(i=1:size(rawDatR,2))
+            if(mod(i,659)==0)
+                tempOut(rt,ct) = rawDatR(j,i);
+                ct=1;
+                rt = rt+1;
+            else
+                tempOut(rt,ct) = rawDatR(j,i);
+                ct=ct+1;
+            end
+        end
+        tempOut2 = flip(tempOut',1);
+        imwrite(tempOut2,[filename(1:end-4),'-image-R_',num2str(j),'.tiff'],'tiff');
+        disp('File Saved Succesfully')
+    end
+    
+    disp('All Images Recieved');
+catch err
+    disp(err);
+end
+
+
+% --------------------------------------------------------------------
+function Untitled_3_Callback(hObject, eventdata, handles)
+% hObject    handle to Untitled_3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function menu_m10ncorrprocess_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_m10ncorrprocess (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+M10_ncorr_SSAnalysis
+
+
+% --------------------------------------------------------------------
+function mb_dicFpath_Callback(hObject, eventdata, handles)
+% hObject    handle to mb_dicFpath (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+% --------------------------------------------------------------------
+function Untitled_4_Callback(hObject, eventdata, handles)
+% hObject    handle to Untitled_4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function mb_dic_fpath_Callback(hObject, eventdata, handles)
+% hObject    handle to mb_dic_fpath (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+outdir = uigetdir('Choose Ouput Save Directory');
+    
+if(~ischar(outdir))
+    return
+end
+   
+handles.DIC_fpath = outdir;
+
+disp(['DIC Image Saving Filepath set to: ',handles.DIC_fpath]);
+guidata(hObject,handles);
+
+% --------------------------------------------------------------------
+function mb_dic_options_Callback(hObject, eventdata, handles)
+% hObject    handle to mb_dic_options (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+prompt = {'File Stem'};
+
+title = 'Choose Output File Stem';
+def = {handles.DIC_stem};
+
+answer = inputdlg(prompt,title,1,def);
+
+if(isempty(answer))
+    return
+end
+
+handles.DIC_stem = answer{1};
+
+guidata(hObject,handles);
