@@ -26,7 +26,7 @@ function varargout = mark10_interface_v2(varargin)
 
 % Edit the above text to modify the response to help mark10_interface_v2
 
-% Last Modified by GUIDE v2.5 17-Jul-2015 15:20:20
+% Last Modified by GUIDE v2.5 22-Jan-2016 14:14:46
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -106,6 +106,9 @@ handles.unitvT = get(handles.popup_unitsT,'Value');
 
 handles.imageFilenames = {};
 handles.passImages = {};
+
+handles.DIC_fpath = '';
+handles.DIC_stem = 'image';
 
 handles.defaultFilepath = '';
 set(handles.button_resume,'UserData',0);
@@ -372,14 +375,19 @@ try
         %runs program using cmd line inputs
         % exe timeout port fileDir fileStem fileExten
         
-        t_fname = [cd,'\DIC_Images\'];
+        if(handles.DIC_fpath == '')
+            t_fname = [cd,'\DIC_Images\'];
+            mkdir(t_fname);
+        else
+            t_fname = handles.DIC_fpath;
+        end
         t_fname(t_fname=='\')='/';
         
         system(['M10_Imaging_Controller.exe ',...
             get(handles.edit_imagerate,'String'),' ',...
             port2,' ',...
             ['"',t_fname,'" '],...
-            'BASLER_IM ',...
+            handles.DIC_stem,...
             '.tiff &']);
         disp('*****************************');
         disp(['IP',ip, '  PORT=',port2]);
@@ -3256,3 +3264,56 @@ function menu_m10ncorrprocess_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 M10_ncorr_SSAnalysis
+
+
+% --------------------------------------------------------------------
+function mb_dicFpath_Callback(hObject, eventdata, handles)
+% hObject    handle to mb_dicFpath (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+% --------------------------------------------------------------------
+function Untitled_4_Callback(hObject, eventdata, handles)
+% hObject    handle to Untitled_4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function mb_dic_fpath_Callback(hObject, eventdata, handles)
+% hObject    handle to mb_dic_fpath (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+outdir = uigetdir('Choose Ouput Save Directory');
+    
+if(~ischar(outdir))
+    return
+end
+   
+handles.DIC_fpath = outdir;
+guidata(hObject,handles);
+
+% --------------------------------------------------------------------
+function mb_dic_options_Callback(hObject, eventdata, handles)
+% hObject    handle to mb_dic_options (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+prompt = {'File Stem'};
+
+title = 'Choose Output File Stem';
+def = {handles.DIC_stem};
+
+answer = inputdlg(prompt,title,1,def);
+
+if(isempty(answer))
+    return
+end
+
+handles.DIC_stem = answer{1};
+
+guidata(hObject,handles);
