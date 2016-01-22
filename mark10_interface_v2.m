@@ -383,12 +383,12 @@ try
             t_fname = handles.DIC_fpath;
         end
         t_fname(t_fname=='\')='/';
-        
+        disp('Starting DIC Camera Controller');
         system(['M10_Imaging_Controller.exe ',...
             get(handles.edit_imagerate,'String'),' ',...
             port2,' ',...
             ['"',t_fname,'" '],...
-            handles.DIC_stem,...
+            ['"',handles.DIC_stem,'" '],...
             '.tiff &']);
         disp('*****************************');
         disp(['IP',ip, '  PORT=',port2]);
@@ -3310,7 +3310,7 @@ end
    
 handles.DIC_fpath = outdir;
 
-disp(['DIC Image Savinf Filepath set to: ',handles.DIC_fpath]);
+disp(['DIC Image Saving Filepath set to: ',handles.DIC_fpath]);
 guidata(hObject,handles);
 
 % --------------------------------------------------------------------
