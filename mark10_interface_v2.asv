@@ -376,7 +376,7 @@ try
         %runs program using cmd line inputs
         % exe timeout port fileDir fileStem fileExten
         
-        if(isempty(handles.DIC_fpath))
+        if(handles.DIC_fpath)
             t_fname = [cd,'\DIC_Images\'];
             mkdir(t_fname);
         else
@@ -3297,8 +3297,6 @@ if(~ischar(outdir))
 end
    
 handles.DIC_fpath = outdir;
-
-disp(['DIC Image Savinf Filepath set to: ',handles.DIC_fpath]);
 guidata(hObject,handles);
 
 % --------------------------------------------------------------------
