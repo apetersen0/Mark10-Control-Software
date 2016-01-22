@@ -1,7 +1,7 @@
-ip = '127.0.01';
+ip = '127.0.0.1';
 port2 = '5200';
 
-t_fname = [cd,'\DIC_Images\'];
+t_fname = [cd,'\'];
 t_fname(t_fname=='\')='/';
 
 system(['M10_Imaging_Controller.exe ',...
@@ -11,7 +11,7 @@ system(['M10_Imaging_Controller.exe ',...
     'BASLER_IM ',...
     '.tiff &']);
 disp('*****************************');
-disp(['IP',ip, '  PORT=',port2]);
+disp(['IP',ip,'  PORT=',port2]);
 
 imSocket = pnet('tcpconnect',ip,str2double(port2));
 pnet(imSocket,'setreadtimeout',500);

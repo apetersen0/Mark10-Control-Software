@@ -380,7 +380,7 @@ try
             t_fname = [cd,'\DIC_Images\'];
             mkdir(t_fname);
         else
-            t_fname = handles.DIC_fpath;
+            t_fname = [handles.DIC_fpath,'\'];
         end
         t_fname(t_fname=='\')='/';
         disp('Starting DIC Camera Controller');
