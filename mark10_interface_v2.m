@@ -393,7 +393,7 @@ try
         disp('*****************************');
         disp(['IP=',ip, '  PORT=',port2]);
 
-        clear(imSocket);
+        clear('imSocket');
         disp('Starting TCP/IP Connection');
         imSocket = pnet('tcpconnect',ip,str2double(port2));
         pnet(imSocket,'setreadtimeout',500);
