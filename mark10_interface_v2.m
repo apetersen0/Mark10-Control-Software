@@ -370,6 +370,7 @@ try
 
     %NEW FEATURE. Connects to loopback ip to trigger image aquisition from
     %own computer
+    imSocket = 0;
     if(get(handles.checkbox_image,'Value')==1)  
         
         %runs program using cmd line inputs
@@ -392,6 +393,7 @@ try
         disp('*****************************');
         disp(['IP',ip, '  PORT=',port2]);
 
+        clear(imSocket);
         imSocket = pnet('tcpconnect',ip,str2double(port2));
         pnet(imSocket,'setreadtimeout',500);
         
