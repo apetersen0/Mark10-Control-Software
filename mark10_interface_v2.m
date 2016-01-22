@@ -735,6 +735,13 @@ catch error
     catch err
     end
     
+    if(get(handles.checkbox_image,'Value'))
+        try
+            pnet(imSocket,'close');
+        catch
+        end
+    end
+    
     %attempts to close down serial connection due to error
     try
         fclose(handles.contrSerial);
@@ -775,7 +782,12 @@ if(get(handles.button_stop,'UserData')==1)
         handles.TIMER_DATA = handles.TIMER_DATA{1,1}';
     end
     
-    
+    if(get(handles.checkbox_image,'Value'))
+        try
+            pnet(imSocket,'close');
+        catch
+        end
+    end
 %     assignin('base','disp',handles.DISP_DATA);
 %     assignin('base','force',handles.FORCE_DATA);
 %     assignin('base','time',handles.TIMEA_DATA);
